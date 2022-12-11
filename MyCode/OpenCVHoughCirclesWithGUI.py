@@ -2,136 +2,254 @@ import cv2 as cv
 import numpy as np
 import sys
 from threading import Thread
-from tkinter import *
+import customtkinter
+import time
 
+## Initialize global variables:
+# Access webcam(# is the port of webcam)
+videoCapture = cv.VideoCapture(0)
+
+# Circle Detecting Algorithm
+blur = 17
+dp = 1.2
+minDist = 500
+minRadiusVar = 1
+maxRadiusVar = 200
+circleSensitivity = 100
+circleEdgePoints = 50
+
+# Camera Settings
+brightness = 100
+contrast = 100
+saturation = 125
+hue = 0
+gain = 10
+exposure = 0
 
 def createGUI():
-	global blur_slider, dp_slider, minDist_slider, minRadius_slider, maxRadius_slider
-	global circleSensitivity_slider, circleEdgePoints_slider
-	global cameraBrightness_slider, cameraContrast_slider, cameraSaturation_slider
-	global cameraHue_slider, cameraGain_slider, cameraExposure_slider
+	customtkinter.set_appearance_mode('System')
+	customtkinter.set_default_color_theme('blue')
 
-	root = Tk()
+	root = customtkinter.CTk()
 	root.title('Light/Camera Settings')
-	root.iconbitmap('C:/Users/rosco/OneDrive/Documents/ECE 480/Main Project/Code/AirHockeyIcon.ico')
-	root.geometry('1150x768')
+	root.iconbitmap('C:/Users/rosco/OneDrive/Documents/ECE 480/Main Project/AirHockeyVision/MyCode/AirHockeyIcon.ico')
+	root.geometry('1366x768')
 	root.resizable(0,0)
+
+	frame = customtkinter.CTkFrame(master=root)
+	frame.grid(row=0,column=0,padx=50,pady=50)
+
+	## Definitions for updating value in GUI and variables
+	def set_blur(value):
+		global blur
+		blur = int(value)
+		blur_label_value.configure(text=int(value))
+
+	def set_dp(value):
+		global dp
+		dp = round(value, 1)
+		dp_label_value.configure(text=round(value, 1))
+
+	def set_minDist(value):
+		global minDist
+		minDist = int(value)
+		minDist_label_value.configure(text=int(value))
+
+	def set_minRadius(value):
+		global minRadiusVar
+		minRadiusVar = int(value)
+		minRadius_label_value.configure(text=int(value))
+
+	def set_maxRadius(value):
+		global maxRadiusVar
+		maxRadiusVar = int(value)
+		maxRadius_label_value.configure(text=int(value))
+
+	def set_circleSensitivity(value):
+		global circleSensitivity
+		circleSensitivity = int(value)
+		circleSensitivity_label_value.configure(text=int(value))
+
+	def set_circleEdgePoints(value):
+		global circleEdgePoints
+		circleEdgePoints = int(value)
+		circleEdgePoints_label_value.configure(text=int(value))
+
+	def set_brightness(value):
+		global brightness
+		brightness = int(value)
+		videoCapture.set(cv.CAP_PROP_BRIGHTNESS, value)
+		cameraBrightness_label_value.configure(text=int(value))
+
+	def set_contrast(value):
+		global contrast
+		contrast = int(value)
+		videoCapture.set(cv.CAP_PROP_CONTRAST, value)
+		cameraContrast_label_value.configure(text=int(value))
+
+	def set_saturation(value):
+		global saturation
+		saturation = int(value)
+		videoCapture.set(cv.CAP_PROP_SATURATION, value)
+		cameraSaturation_label_value.configure(text=int(value))
+
+	def set_hue(value):
+		global hue
+		hue = int(value)
+		videoCapture.set(cv.CAP_PROP_HUE, value)
+		cameraHue_label_value.configure(text=int(value))
+
+	def set_gain(value):
+		global gain
+		gain = int(value)
+		videoCapture.set(cv.CAP_PROP_GAIN, value)
+		cameraGain_label_value.configure(text=int(value))
+
+	def set_exposure(value):
+		global exposure
+		exposure = int(value)
+		videoCapture.set(cv.CAP_PROP_EXPOSURE, value)
+		cameraExposure_label_value.configure(text=int(value))
 
 	## Sliders for circle detecting algorithm
 	# Blur level of frame
-	blur_label = Label(root, text="Blur")
-	blur_label.grid(row=0, column=0, pady=1, padx=1)
-	blur_slider = Scale(root, from_=1, to=55, length=400, tickinterval=18, resolution=2,
-						troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	blur_slider.set(17)
+	blur_label = customtkinter.CTkLabel(master=frame, text="Blur")
+	blur_label.grid(row=0, column=0, pady=10, padx=10)
+	blur_slider = customtkinter.CTkSlider(master=frame, from_=1, to=55, width=400,
+						number_of_steps=27, border_width=3, command=set_blur)
+	blur_slider.set(blur)
 	blur_slider.grid(row=0, column=1, pady=10, padx=10)
+	blur_label_value = customtkinter.CTkLabel(master=frame, text=blur)
+	blur_label_value.grid(row=0, column=2, pady=10, padx=10)	
 
 	# dp inverse ratio of resolution
-	dp_label = Label(root, text="dp")
-	dp_label.grid(row=1, column=0, pady=1, padx=1)
-	dp_slider = Scale(root, from_=1, to=5, length=400, tickinterval=0.4, resolution=0.05,
-					  troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	dp_slider.set(1.2)
-	dp_slider.grid(row=1, column=1, pady=10, padx=1)
-
+	dp_label = customtkinter.CTkLabel(master=frame, text="dp")
+	dp_label.grid(row=1, column=0, pady=10, padx=10)
+	dp_slider = customtkinter.CTkSlider(master=frame, from_=1, to=5, width=400,
+						number_of_steps=80, border_width=3, command=set_dp)
+	dp_slider.set(dp)
+	dp_slider.grid(row=1, column=1, pady=10, padx=10)
+	dp_label_value = customtkinter.CTkLabel(master=frame, text=dp)
+	dp_label_value.grid(row=1, column=2, pady=10, padx=10)
+	
 	# Minimum distance between circles
-	minDist_label = Label(root, text="MinDist")
-	minDist_label.grid(row=2, column=0, pady=1, padx=1)
-	minDist_slider = Scale(root, from_=1, to=1001, length=400, tickinterval=100, resolution=1,
-						   troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	minDist_slider.set(501)
-	minDist_slider.grid(row=2, column=1, pady=10, padx=1)
+	minDist_label = customtkinter.CTkLabel(master=frame, text="MinDist")
+	minDist_label.grid(row=2, column=0, pady=10, padx=10)
+	minDist_slider = customtkinter.CTkSlider(master=frame, from_=1, to=100, width=400,
+						number_of_steps=999, border_width=3, command=set_minDist)
+	minDist_slider.set(minDist)
+	minDist_slider.grid(row=2, column=1, pady=10, padx=10)
+	minDist_label_value = customtkinter.CTkLabel(master=frame, text=minDist)
+	minDist_label_value.grid(row=2, column=2, pady=10, padx=10)
 
 	# Minimum radius of circle
-	minRadius_label = Label(root, text="MinRadius")
-	minRadius_label.grid(row=3, column=0, pady=1, padx=1)
-	minRadius_slider = Scale(root, from_=1, to=201, length=400, tickinterval=20, resolution=1,
-						   troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	minRadius_slider.set(1)
-	minRadius_slider.grid(row=3, column=1, pady=10, padx=1)
+	minRadius_label = customtkinter.CTkLabel(master=frame, text="MinRadius")
+	minRadius_label.grid(row=3, column=0, pady=10, padx=10)
+	minRadius_slider = customtkinter.CTkSlider(master=frame, from_=1, to=200, width=400,
+						number_of_steps=199, border_width=3, command=set_minRadius)
+	minRadius_slider.set(minRadiusVar)
+	minRadius_slider.grid(row=3, column=1, pady=10, padx=10)
+	minRadius_label_value = customtkinter.CTkLabel(master=frame, text=minRadiusVar)
+	minRadius_label_value.grid(row=3, column=2, pady=10, padx=10)
 
 	# Maximum radius of circle
-	maxRadius_label = Label(root, text="MaxRadius")
-	maxRadius_label.grid(row=4, column=0, pady=1, padx=1)
-	maxRadius_slider = Scale(root, from_=1, to=401, length=400, tickinterval=40, resolution=1,
-						   troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	maxRadius_slider.set(200)
-	maxRadius_slider.grid(row=4, column=1, pady=10, padx=1)
+	maxRadius_label = customtkinter.CTkLabel(master=frame, text="MaxRadius")
+	maxRadius_label.grid(row=4, column=0, pady=10, padx=10)
+	maxRadius_slider = customtkinter.CTkSlider(master=frame, from_=1, to=400, width=400,
+						number_of_steps=399, border_width=3, command=set_maxRadius)
+	maxRadius_slider.set(maxRadiusVar)
+	maxRadius_slider.grid(row=4, column=1, pady=10, padx=10)
+	maxRadius_label_value = customtkinter.CTkLabel(master=frame, text=maxRadiusVar)
+	maxRadius_label_value.grid(row=4, column=2, pady=10, padx=10)
 
 	# Sensitivity to circle detection
-	circleSensitivity_label = Label(root, text="Circle Sensitivity")
-	circleSensitivity_label.grid(row=5, column=0, pady=1, padx=1)
-	circleSensitivity_slider = Scale(root, from_=1, to=201, length=400, tickinterval=20, resolution=1,
-						   troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	circleSensitivity_slider.set(100)
-	circleSensitivity_slider.grid(row=5, column=1, pady=10, padx=1)
+	circleSensitivity_label = customtkinter.CTkLabel(master=frame, text="Circle Sensitivity")
+	circleSensitivity_label.grid(row=5, column=0, pady=10, padx=10)
+	circleSensitivity_slider = customtkinter.CTkSlider(master=frame, from_=1, to=200, width=400,
+						number_of_steps=199, border_width=3, command=set_circleSensitivity)
+	circleSensitivity_slider.set(circleSensitivity)
+	circleSensitivity_slider.grid(row=5, column=1, pady=10, padx=10)
+	circleSensitivity_label_value = customtkinter.CTkLabel(master=frame, text=circleSensitivity)
+	circleSensitivity_label_value.grid(row=5, column=2, pady=10, padx=10)
 
 	# Minimum # of edge points to declare a circle
-	circleEdgePoints_label = Label(root, text="# of edge points")
-	circleEdgePoints_label.grid(row=6, column=0, pady=1, padx=1)
-	circleEdgePoints_slider = Scale(root, from_=4, to=104, length=400, tickinterval=10, resolution=1,
-						   troughcolor='#ff00ff', bd=3, orient=HORIZONTAL)
-	circleEdgePoints_slider.set(50)
-	circleEdgePoints_slider.grid(row=6, column=1, pady=10, padx=1)
+	circleEdgePoints_label = customtkinter.CTkLabel(master=frame, text="# of edge points")
+	circleEdgePoints_label.grid(row=6, column=0, pady=10, padx=10)
+	circleEdgePoints_slider = customtkinter.CTkSlider(master=frame, from_=4, to=100, width=400,
+						number_of_steps=96, border_width=3, command=set_circleEdgePoints)
+	circleEdgePoints_slider.set(circleEdgePoints)
+	circleEdgePoints_slider.grid(row=6, column=1, pady=10, padx=10)
+	circleEdgePoints_label_value = customtkinter.CTkLabel(master=frame, text=circleEdgePoints)
+	circleEdgePoints_label_value.grid(row=6, column=2, pady=10, padx=10)
 
 	## Sliders for camera settings
-	# Brightness of capture (might be to 255 but can't tell a difference between 250 and 255)
-	cameraBrightness_label = Label(root, text="Camera Brightness")
-	cameraBrightness_label.grid(row=0, column=2, pady=1, padx=1)
-	cameraBrightness_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraBrightness_slider.set(100)
-	cameraBrightness_slider.grid(row=0, column=3, pady=10, padx=10)
+	# Brightness of capture
+	cameraBrightness_label = customtkinter.CTkLabel(master=frame, text="Camera Brightness")
+	cameraBrightness_label.grid(row=0, column=3, pady=10, padx=10)
+	cameraBrightness_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_brightness)
+	cameraBrightness_slider.set(brightness)
+	cameraBrightness_slider.grid(row=0, column=4, pady=10, padx=10)
+	cameraBrightness_label_value = customtkinter.CTkLabel(master=frame, text=brightness)
+	cameraBrightness_label_value.grid(row=0, column=5, pady=10, padx=10)
 
-	# Contrast of capture (might be to 255 but can't tell a difference between 250 and 255)
-	cameraContrast_label = Label(root, text="Camera Contrast")
-	cameraContrast_label.grid(row=1, column=2, pady=1, padx=1)
-	cameraContrast_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraContrast_slider.set(75)
-	cameraContrast_slider.grid(row=1, column=3, pady=10, padx=10)
+	# Contrast of capture
+	cameraContrast_label = customtkinter.CTkLabel(master=frame, text="Camera Contrast")
+	cameraContrast_label.grid(row=1, column=3, pady=10, padx=10)
+	cameraContrast_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_contrast)
+	cameraContrast_slider.set(contrast)
+	cameraContrast_slider.grid(row=1, column=4, pady=10, padx=10)
+	cameraContrast_label_value = customtkinter.CTkLabel(master=frame, text=contrast)
+	cameraContrast_label_value.grid(row=1, column=5, pady=10, padx=10)
 	
-	# Saturation of capture (might be to 255 but can't tell a difference between 250 and 255)
-	cameraSaturation_label = Label(root, text="Camera Saturation")
-	cameraSaturation_label.grid(row=2, column=2, pady=1, padx=1)
-	cameraSaturation_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraSaturation_slider.set(125)
-	cameraSaturation_slider.grid(row=2, column=3, pady=10, padx=10)
+	# Saturation of capture
+	cameraSaturation_label = customtkinter.CTkLabel(master=frame, text="Camera Saturation")
+	cameraSaturation_label.grid(row=2, column=3, pady=10, padx=10)
+	cameraSaturation_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_saturation)
+	cameraSaturation_slider.set(saturation)
+	cameraSaturation_slider.grid(row=2, column=4, pady=10, padx=10)
+	cameraSaturation_label_value = customtkinter.CTkLabel(master=frame, text=saturation)
+	cameraSaturation_label_value.grid(row=2, column=5, pady=10, padx=10)
 
 	# Hue of capture (not applicable to camera?)
-	cameraHue_label = Label(root, text="Camera Hue")
-	cameraHue_label.grid(row=3, column=2, pady=1, padx=1)
-	cameraHue_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraHue_slider.set(0)
-	cameraHue_slider.grid(row=3, column=3, pady=10, padx=10)
+	cameraHue_label = customtkinter.CTkLabel(master=frame, text="Camera Hue")
+	cameraHue_label.grid(row=3, column=3, pady=10, padx=10)
+	cameraHue_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_hue)
+	cameraHue_slider.set(hue)
+	cameraHue_slider.grid(row=3, column=4, pady=10, padx=10)
+	cameraHue_label_value = customtkinter.CTkLabel(master=frame, text=hue)
+	cameraHue_label_value.grid(row=3, column=5, pady=10, padx=10)
+	
 
-	# Gain of capture (might be to 255 but can't tell a difference between 250 and 255)
-	cameraGain_label = Label(root, text="Camera Gain")
-	cameraGain_label.grid(row=4, column=2, pady=1, padx=1)
-	cameraGain_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraGain_slider.set(0)
-	cameraGain_slider.grid(row=4, column=3, pady=10, padx=10)
+	# Gain of capture
+	cameraGain_label = customtkinter.CTkLabel(master=frame, text="Camera Gain")
+	cameraGain_label.grid(row=4, column=3, pady=10, padx=10)
+	cameraGain_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_gain)
+	cameraGain_slider.set(gain)
+	cameraGain_slider.grid(row=4, column=4, pady=10, padx=10)
+	cameraGain_label_value = customtkinter.CTkLabel(master=frame, text=gain)
+	cameraGain_label_value.grid(row=4, column=5, pady=10, padx=10)
 
 	# Exposure of capture (not applicable to camera?)
-	cameraExposure_label = Label(root, text="Camera Exposure")
-	cameraExposure_label.grid(row=5, column=2, pady=1, padx=1)
-	cameraExposure_slider = Scale(root, from_=0, to=250, length=400, tickinterval=25,
-						resolution=1, troughcolor='#12ddff', bd=3, orient=HORIZONTAL)
-	cameraExposure_slider.set(0)
-	cameraExposure_slider.grid(row=5, column=3, pady=10, padx=10)
+	cameraExposure_label = customtkinter.CTkLabel(master=frame, text="Camera Exposure")
+	cameraExposure_label.grid(row=5, column=3, pady=10, padx=10)
+	cameraExposure_slider = customtkinter.CTkSlider(master=frame, from_=0, to=255, width=400,
+						number_of_steps=255, border_width=3, command=set_exposure)
+	cameraExposure_slider.set(exposure)
+	cameraExposure_slider.grid(row=5, column=4, pady=10, padx=10)
+	cameraExposure_label_value = customtkinter.CTkLabel(master=frame, text=exposure)
+	cameraExposure_label_value.grid(row=5, column=5, pady=10, padx=10)
 
 	# Buttons
-	Button(root, text='Quit', command=root.quit).grid(row=7, column=1, sticky=SW, pady=10, padx=1)
-
+	customtkinter.CTkButton(master=frame, text='Quit', command=root.quit).grid(row=7, column=1, pady=10, padx=10)
+	
 	root.mainloop()
 
 def findCircles():
-	# Access webcam(# is the port of webcam)
-	videoCapture = cv.VideoCapture(0)
-
 	# Circle from the previous frame (will represent the current detected circle)
 	prevCircle = None
 
@@ -140,29 +258,6 @@ def findCircles():
 
 	# Make sure webcam/image is accessible
 	while True:
-		#Global variables from sliders in GUI
-		global blur_slider, dp_slider, minDist_slider, minRadius_slider, maxRadius_slider
-		global circleSensitivity_slider, circleEdgePoints_slider
-		global cameraBrightness_slider, cameraContrast_slider, cameraSaturation_slider
-		global cameraHue_slider, cameraGain_slider, cameraExposure_slider
-
-		#Assign variables from respective slider position
-		blur = blur_slider.get()
-		dp = dp_slider.get()
-		minDist = minDist_slider.get()
-		minRadiusVar = minRadius_slider.get()
-		maxRadiusVar = maxRadius_slider.get()
-		circleSensitivity = circleSensitivity_slider.get()
-		circleEdgePoints = circleEdgePoints_slider.get()
-
-		# Update settings of capture device
-		videoCapture.set(cv.CAP_PROP_BRIGHTNESS, cameraBrightness_slider.get())
-		videoCapture.set(cv.CAP_PROP_CONTRAST, cameraContrast_slider.get())
-		videoCapture.set(cv.CAP_PROP_SATURATION, cameraSaturation_slider.get())
-		videoCapture.set(cv.CAP_PROP_HUE, cameraHue_slider.get())
-		videoCapture.set(cv.CAP_PROP_GAIN, cameraGain_slider.get())
-		videoCapture.set(cv.CAP_PROP_EXPOSURE, cameraExposure_slider.get())
-
 		# ret is a boolean value for whether it was able to read the frame successfully
 		# frame is the captured image from the camera
 		ret, frame = videoCapture.read()
@@ -195,7 +290,7 @@ def findCircles():
 		circles = cv.HoughCircles(blurFrame, cv.HOUGH_GRADIENT, dp, minDist, param1=circleSensitivity,
 								  param2=circleEdgePoints, minRadius=minRadiusVar, maxRadius=maxRadiusVar)
 		
-		#Are there circles detected in the frame
+		# Are there circles detected in the frame
 		if circles is not None:
 			
 			# Convert circles to a numpy array
