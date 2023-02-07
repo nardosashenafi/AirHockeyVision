@@ -10,28 +10,34 @@ Once finished, press ESC to undistort image.
 
 Programmed for used with 7x7 chessboard. (9x9 including outside ring)
 
-TODO: Create seperate program that get undistort values from saved images
-    Apply undistortion to current puck detection program
+TODO: Apply undistortion to current puck detection program
+    Get physical coordinates of one corner accurately using findChessboardCornersSB() meta data
+    2.75 cm/85 holes =2.44 cm
+    Transform 2D coordinates to 3D
 """
-
 import cv2 as cv
 import numpy as np
-import glob
-
 
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-chessh=7;
-chessw=7;
+chessh=6;
+chessw=8;
 cameraName = 'CameraName'
 objp = np.zeros((chessh * chessw, 3), np.float32)
-objp[0:, :2] = np.mgrid[0:7, 0:7].T.reshape(-1, 2)
-frameNum=0;
+objp[0:, :2] = np.mgrid[0:chessh, 0:chessw].T.reshape(-1, 2)
+
+#Zc is distance from camera to Calibration Point. Calculated later?
+Zc = 0
+#s is solved for later
+s = 0
+
+#Enter different values for calibCornerLocation based on known location available region
+calibCornerLocation = [[0],[0],[0],[1]]
 
 # Arrays to store object points and image points from all the images.
 objpoints = []  # 3d point in real world space
 imgpoints = []  # 2d points in image plane.
-frames = []  # Frames take from camera
+frames = []  # Frames taken from camera
 cam = cv.VideoCapture(0)
 
 if not cam.isOpened():
@@ -66,8 +72,8 @@ while True:
             # Add data from current frame to arrays
             objpoints.append(objp)
             imgpoints.append(corners2)
+            print("Image Taken")
 
-            frameNum = frameNum+1
         else:  # If no corners were returned
             print("Chessboard not detected in image")
     if k%256 == 27:  # If ESC is pressed
@@ -100,7 +106,27 @@ while True:
     if k%256 == 27:
         # ESC pressed
         print("Escape hit, closing...")
-        np.savez("CameraArrays" +cameraName,newcameramtx,dist,rvecs[-1],tvecs[-1])
+        uv1 = [[corners2[0][0][0]],[corners2[0][0][1]],[1]]
+
+        rotMtx, m = cv.Rodrigues(rvecs[-1])
+        print("rotMtx", rotMtx)
+        transVec = tvecs[-1]
+        print("transVec[0][0]", transVec[2][0])
+        extMtx1 = [[rotMtx[0][0], rotMtx[0][1], rotMtx[0][2], transVec[0][0]],
+                  [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
+                  [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]]]
+
+        extMtx2 = [[rotMtx[0][0], rotMtx[0][1], rotMtx[0][2], transVec[0][0]],
+                   [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
+                   [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]], [0, 0, 0, 1]]
+
+        print("extMtx2", extMtx2)
+        # Don't Inverse.  Just dot the others without uv1 and check.
+        rightSide = np.linalg.multi_dot([newcameramtx,extMtx1,calibCornerLocation])
+        s = rightSide[2][0]
+        print("s", s)
+
+        np.savez("CameraArrays" +cameraName,newcameramtx,dist,rvecs[-1],tvecs[-1],s,extMtx2)
         print(newcameramtx)
         print(dist)
         print(rvecs[-1])
