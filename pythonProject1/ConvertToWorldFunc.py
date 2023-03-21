@@ -32,11 +32,19 @@ def img2world(x, y, camMtx, extMtx, s, camZ):
     imgMtx = [[s * x], [s * y], [s]]
     imgMtx = np.linalg.multi_dot([np.linalg.inv(camMtx), imgMtx])  # Double check 3x1.
     imgMtx = np.delete(imgMtx,2,0)
-    imgMtx = np.vstack([imgMtx,camZ, [1]])
-    print(imgMtx)
-    objpos = np.linalg.multi_dot([np.linalg.inv(extMtx), imgMtx])
+    #temp
+    camZ = 139
+    extMtx[3][2] = -139
+    #temp
 
-    return objpos
+    imgMtx = np.vstack([imgMtx,camZ, [1]])
+    #print(imgMtx)
+    objpos = np.linalg.multi_dot([np.linalg.inv(extMtx), imgMtx])
+    objpos = objpos/objpos[[3][0]]
+    # Normal to plane is 139cm
+    # Horizontal (y) offset to 00 is 24cm
+    # x offset is 0 cm
+    return [objpos,imgMtx]
 
 def deWarp(frame,camMtx,distMtx,newCamMtx,roi):
     """
@@ -47,8 +55,9 @@ def deWarp(frame,camMtx,distMtx,newCamMtx,roi):
     :return: Dewarped Frame (can be processed with Monochrome, Blur, etc...)
     """
     import cv2 as cv
-    undistortedFrame = cv.undistort(frame, camMtx, distMtx, None, newCamMtx)
-    x, y, w, h = roi
+
+    #undistortedFrame = cv.undistort(frame, camMtx, distMtx, None, newCamMtx)
+    #x, y, w, h = roi
     #undistortedFrame = undistortedFrame[y:y + h, x:x + w]
 
-    return undistortedFrame
+    return frame

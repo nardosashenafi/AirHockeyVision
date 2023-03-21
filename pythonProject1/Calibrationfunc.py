@@ -11,8 +11,7 @@ Once finished, press ESC to undistort image.
 
 Programmed for used with 7x7 chessboard. (9x9 including outside ring)
 
-TODO: Apply undistortion to current puck detection program
-    Get physical coordinates of one corner accurately using findChessboardCornersSB() meta data
+TODO:
     2.75 cm/85 holes =2.44 cm
     Transform 2D coordinates to 3D
 """
@@ -35,7 +34,7 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
     objp = np.zeros((chessh * chessw, 3), np.float32)
     objp[0:, :2] = np.mgrid[startingX:startingX+chessh, startingY:startingY+chessw].T.reshape(-1, 2)
     objp = objp*gridwidth
-    print(objp)
+    #print(objp)
     #s is solved for later
     s = 0
 
@@ -47,6 +46,9 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
     imgpoints = []  # 2d points in image plane.
     frames = []  # Frames taken from camera
     cam = cv.VideoCapture(camPortNum)
+
+    cam.set(cv.CAP_PROP_FRAME_WIDTH, 1280)  # Set camera frame width
+    cam.set(cv.CAP_PROP_FRAME_HEIGHT, 720)  # Set camera frame height
 
     if not cam.isOpened():
         print("Cannot open camera")
@@ -119,22 +121,24 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
             uv1 = [[corners2[0][0][0]],[corners2[0][0][1]],[1]]
 
             rotMtx, m = cv.Rodrigues(rvecs[-1])
-            print("rotMtx", rotMtx)
+            #print("rotMtx", rotMtx)
             transVec = tvecs[-1]
-            print("transVec[0][0]", transVec[2][0])
+            #print("transVec[0][0]", transVec[2][0])
             extMtx1 = [[rotMtx[0][0], rotMtx[0][1], rotMtx[0][2], transVec[0][0]],
                       [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
                       [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]]]
 
             extMtx2 = [[rotMtx[0][0], rotMtx[0][1], rotMtx[0][2], transVec[0][0]],
                        [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
-                       [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]], [0, 0, 0, 1]]
+                       [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]],
+                       [0, 0, 0, 1]]
 
-            print("extMtx2", extMtx2)
+            #print("extMtx2", extMtx2)
             # Don't Inverse.  Just dot the others without uv1 and check.
-            rightSide = np.linalg.multi_dot([newcameramtx,extMtx1,calibCornerLocation])
-            s = rightSide[2][0]
-            print("s", s)
+            rightSide = np.linalg.multi_dot([newcameramtx, extMtx1, calibCornerLocation])
+            #s = rightSide[2][0]
+            s = camZ
+            #print("s", s)
 
             np.savez("CameraArrays" +cameraName, cameramtx, newcameramtx, dist, roi, s, extMtx2, camZ)
             break
