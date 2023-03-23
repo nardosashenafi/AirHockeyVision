@@ -21,17 +21,17 @@ class CircleDetectionTestModeWindows():
 		camera.fps = fps	# Framerate of capture
         
 	def detectionProgram(camera, testMode):
-		criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-		# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-		chessh = 7
-		chessw = 9
+		criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001) 	# NOT USED
+		# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)		# NOT USED
+		chessh = 7																	# NOT USED
+		chessw = 9																	# NOT USED
 		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
-		# Arrays to store object points and image points from all the images.
-		frames = []  # Frames take from camera
+		# Arrays to store object points and image points from all the images. 		# NOT USED
+		frames = []  # Frames take from camera										# NOT USED
 
 		fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
-		videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)
+		videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
 
 		if testMode:
 			print("\nParameters BEFORE assignment: ")
@@ -40,16 +40,16 @@ class CircleDetectionTestModeWindows():
 			print(f"FPS: {videoCapture.get(cv.CAP_PROP_FPS)}")
 			print(f"FOURCC: {videoCapture.get(cv.CAP_PROP_FOURCC)}")
         
-		videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)
-		videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)
-		videoCapture.set(cv.CAP_PROP_AUTOFOCUS,camera.tog_autoF)
-		videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)
-		videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)
-		videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)
-		videoCapture.set(cv.CAP_PROP_BRIGHTNESS,camera.brightness)
-		videoCapture.set(cv.CAP_PROP_FOCUS, camera.focus) 
-		videoCapture.set(cv.CAP_PROP_FPS, camera.fps)
-		videoCapture.set(cv.CAP_PROP_FOURCC,fourcc)
+		videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
+		videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
+		videoCapture.set(cv.CAP_PROP_AUTOFOCUS,camera.tog_autoF)	# Set camera autofocus
+		videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)	# Set camera autoexposure
+		videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)	# Set camera exposure
+		videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)	# Set camera contrast
+		videoCapture.set(cv.CAP_PROP_BRIGHTNESS,camera.brightness)	# Set camera brightness
+		videoCapture.set(cv.CAP_PROP_FOCUS, camera.focus) 	# Set camera focus
+		videoCapture.set(cv.CAP_PROP_FPS, camera.fps)	# Set camera fps
+		videoCapture.set(cv.CAP_PROP_FOURCC,fourcc)	# Set camera compression format
 
 		if testMode:
 			print("\nParameters AFTER assignment: ")
@@ -63,15 +63,15 @@ class CircleDetectionTestModeWindows():
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
 		runtime = 0	# Runtime of individual loop (each frame)
 		runtime_counter = 0	# Total runtime of all loops added up
-		start_time =0	# Starting time of each loop
-		frame_counter =0	# Total number of frames detected by the program during runtime
-		circle_counter =0	# Total number of circles detected by the program during runtime
+		start_time = 0	# Starting time of each loop
+		frame_counter = 0	# Total number of frames detected by the program during runtime
+		circle_counter = 0	# Total number of circles detected by the program during runtime
         
 		while True:
 			start_time = t.perf_counter()	# Time how long the loop will take to run
 	    
 			ret, frame = videoCapture.read()	# ret is a boolean: was it able to capture the frame successfully
-			if not ret: print("Couldn't read frame\n");break	# If frame is not read successfully, end program
+			if not ret: break	# If frame is not read successfully, end program
 	    
 			frame_counter += 1	# Frame is read successfully, so increment frame counter
 
@@ -111,7 +111,7 @@ class CircleDetectionTestModeWindows():
 
 			if testMode:
 				cv.imshow("circles",frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision",undistortedFrame)
+				cv.imshow("CameraVision",undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
 					print(f"Total Runtime: {runtime_counter:.3f} seconds")
