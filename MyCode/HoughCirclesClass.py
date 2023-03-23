@@ -90,15 +90,16 @@ class CircleDetectionTestModeWindows():
 					if prevCircle is not None:	# Is there is a current circle stored
 						if (dist(chosen[0],chosen[1],prevCircle[0],prevCircle[1])\
 	  							<= dist(i[0],i[1],prevCircle[0],prevCircle[1])):
-							chosen = i
+							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
 							#TODO: publish ros topic
 						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
+					
 					prevCircle = chosen	# Set the previous circle equal to the chosen circle at the end of the loop
-                   
 					circle_counter += 1	# Circle is drawn, so increment circle counter
+
 			runtime = t.perf_counter() - start_time 	# Time how long the loop took to run
 			runtime_counter += runtime	# Get a total runtime of all loops
 			framerate = frame_counter / runtime_counter	# Calculate framerate
@@ -110,8 +111,8 @@ class CircleDetectionTestModeWindows():
 				print(f'Object Position: {objpos}')
 
 			if testMode:
-				cv.imshow("circles",frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision",undistortedFrame) # Show the calibrated frame to the user
+				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
+				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
 					print(f"Total Runtime: {runtime_counter:.3f} seconds")
