@@ -41,7 +41,7 @@ def createGUI():
 
 	root = customtkinter.CTk()
 	root.title('Light/Camera Settings')
-	root.iconbitmap('AirHockeyIcon.ico')
+	#root.iconbitmap('AirHockeyIcon.ico')
 	#root.geometry('1366x768')
 	#root.resizable(0,0)
 
@@ -375,8 +375,8 @@ def findCircles():
 		blurFrame = cv.GaussianBlur(grayFrame, (blurLevel,blurLevel), 0)	# Make a copy of grayFrame where the frame has been blurred
 		# cv.imshow("Blurred Frame", blurFrame)								# (Can use different blurring filters and adjust the level of blurring)
 
-		circles = cv.HoughCircles(blurFrame,	# Find circles within the frame given these parameters.
-								  gradient,		# The result will be a list of circles found.
+		circles = cv.HoughCircles(blurFrame,	# Find circles within the frame given these parameters
+								  gradient,		# The result will be a list of circles found
 								  dp,
 								  minDist,
 								  param1=circleSensitivity,
@@ -423,7 +423,7 @@ def findCircles():
 			print(f'Total Runtime: {runtimeCounter:.3f} sec\n')					# Outputs total runtime of the program in seconds
 			print(f'Total Frames: {frameCounter:.0f}\n')						# Outputs the total number of frames processed by the detection program
 			print(f'FPS: {(frameCounter/runtimeCounter):.3f}\n')				# Outputs the number of frames per second the detection program ran at
-			print(f'Processing speed: {runtimeCounter/circleCounter:.3f} sec\n')# Outputs the average time in seconds it took the program to process each circle
+			print(f'Processing speed: {(runtimeCounter/circleCounter):.3f} sec\n')# Outputs the average time in seconds it took the program to process each circle
 			print(f'Accuracy: {100*(circleCounter/frameCounter):.3f}%')			# Outputs the ratio of circles found to number of frames processed in percentage
 
 			videoCapture.release()	# Release webcam and close all windows
