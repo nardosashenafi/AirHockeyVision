@@ -39,7 +39,7 @@ class CircleDetectionTestModeWindows():
 		# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)		# NOT USED
 		chessh = 7																	# NOT USED
 		chessw = 9																	# NOT USED
-		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
+		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
 		# Arrays to store object points and image points from all the images. 		# NOT USED
 		frames = []  # Frames take from camera										# NOT USED
@@ -86,7 +86,7 @@ class CircleDetectionTestModeWindows():
 	    
 			frame_counter += 1	# Frame is read successfully, so increment frame counter
 
-			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
+			undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
 			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
@@ -105,7 +105,7 @@ class CircleDetectionTestModeWindows():
 							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
 							#TODO: publish ros topic
-						#[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
+						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
@@ -124,7 +124,7 @@ class CircleDetectionTestModeWindows():
 
 			if testMode:
 				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
-				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
+				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
 					print(f"Total Runtime: {runtime_counter:.3f} seconds")
