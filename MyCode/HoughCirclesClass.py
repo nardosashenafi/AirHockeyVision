@@ -30,6 +30,8 @@ class CircleDetectionTestModeWindows():
 		camera.saturation = 0
 		camera.hue = 0
 		camera.gain = 0
+		camera.fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
+		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
         
 	def detectionProgram(camera, testMode):
 		criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001) 	# NOT USED
@@ -41,34 +43,31 @@ class CircleDetectionTestModeWindows():
 		# Arrays to store object points and image points from all the images. 		# NOT USED
 		frames = []  # Frames take from camera										# NOT USED
 
-		fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
-		videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
-
 		if testMode:
 			print("\nParameters BEFORE assignment: ")
-			print(f"WIDTH: {videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
-			print(f"HEIGHT: {videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
-			print(f"FPS: {videoCapture.get(cv.CAP_PROP_FPS)}")
-			print(f"FOURCC: {videoCapture.get(cv.CAP_PROP_FOURCC)}")
+			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
+			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
+			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
+			print(f"FOURCC: {camera.videoCapture.get(cv.CAP_PROP_FOURCC)}")
         
-		videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
-		videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
-		videoCapture.set(cv.CAP_PROP_AUTOFOCUS,camera.tog_autoF)	# Set camera autofocus
-		videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)	# Set camera autoexposure
-		videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)	# Set camera exposure
-		videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)	# Set camera contrast
-		videoCapture.set(cv.CAP_PROP_BRIGHTNESS,camera.brightness)	# Set camera brightness
-		videoCapture.set(cv.CAP_PROP_FOCUS, camera.focus) 	# Set camera focus
-		videoCapture.set(cv.CAP_PROP_FPS, camera.fps)	# Set camera fps
-		videoCapture.set(cv.CAP_PROP_FOURCC,fourcc)	# Set camera compression format
+		camera.videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
+		camera.videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
+		camera.videoCapture.set(cv.CAP_PROP_AUTOFOCUS,camera.tog_autoF)	# Set camera autofocus
+		camera.videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)	# Set camera autoexposure
+		camera.videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)	# Set camera exposure
+		camera.videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)	# Set camera contrast
+		camera.videoCapture.set(cv.CAP_PROP_BRIGHTNESS,camera.brightness)	# Set camera brightness
+		camera.videoCapture.set(cv.CAP_PROP_FOCUS, camera.focus) 	# Set camera focus
+		camera.videoCapture.set(cv.CAP_PROP_FPS, camera.fps)	# Set camera fps
+		camera.videoCapture.set(cv.CAP_PROP_FOURCC,camera.fourcc)	# Set camera compression format
 
 		if testMode:
 			print("\nParameters AFTER assignment: ")
-			print(f"WIDTH: {videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
-			print(f"HEIGHT: {videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
-			print(f"FPS: {videoCapture.get(cv.CAP_PROP_FPS)}")
-			print(f"FOURCC: {videoCapture.get(cv.CAP_PROP_FOURCC)}")
-			print(f"Settings {videoCapture.get(cv.CAP_PROP_SETTINGS)}")
+			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
+			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
+			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
+			print(f"FOURCC: {camera.videoCapture.get(cv.CAP_PROP_FOURCC)}")
+			print(f"Settings {camera.videoCapture.get(cv.CAP_PROP_SETTINGS)}")
             
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
@@ -81,7 +80,7 @@ class CircleDetectionTestModeWindows():
 		while True:
 			start_time = t.perf_counter()	# Time how long the loop will take to run
 	    
-			ret, frame = videoCapture.read()	# ret is a boolean: was it able to capture the frame successfully
+			ret, frame = camera.videoCapture.read()	# ret is a boolean: was it able to capture the frame successfully
 			if not ret: break	# If frame is not read successfully, end program
 	    
 			frame_counter += 1	# Frame is read successfully, so increment frame counter
@@ -134,7 +133,7 @@ class CircleDetectionTestModeWindows():
 					if frame_counter != 0:
 						print(f"Accuracy: {(100*(circle_counter/frame_counter)):.3f}%")
 				break
-		videoCapture.release()	# Release webcam and close all windows
+		camera.videoCapture.release()	# Release webcam and close all windows
 		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
 		sys.exit()	# Terminate the program
         
@@ -162,87 +161,72 @@ class CircleDetectionTestModeWindows():
 
 		## Definitions for updating value in GUI and variables
 		def setBlurLevel(value):
-			global blurLevel
-			blurLevel = int(value)
-			blurLevel_label_value.configure(text=blurLevel)
+			camera.blur = int(value)
+			blurLevel_label_value.configure(text=camera.blur)
 
 		def setDp(value):
-			global dp
-			dp = round(value, 1)
-			dp_label_value.configure(text=dp)
+			camera.dp = round(value, 1)
+			dp_label_value.configure(text=camera.dp)
 
 		def setMinDist(value):
-			global minDist
-			minDist = int(value)
-			minDist_label_value.configure(text=minDist)
+			camera.minDist = int(value)
+			minDist_label_value.configure(text=camera.minDist)
 
 		def setMinRadius(value):
-			global minRadiusVar
-			minRadiusVar = int(value)
-			minRadius_label_value.configure(text=minRadiusVar)
+			camera.minRadius = int(value)
+			minRadius_label_value.configure(text=camera.minRadius)
 
 		def setMaxRadius(value):
-			global maxRadiusVar
-			maxRadiusVar = int(value)
-			maxRadius_label_value.configure(text=maxRadiusVar)
+			camera.maxRadius = int(value)
+			maxRadius_label_value.configure(text=camera.maxRadius)
 
 		def setCircleSensitivity(value):
-			global circleSensitivity
-			circleSensitivity = int(value)
-			circleSensitivity_label_value.configure(text=circleSensitivity)
+			camera.circleSensitivity = int(value)
+			circleSensitivity_label_value.configure(text=camera.circleSensitivity)
 
 		def setCircleEdgePoints(value):
-			global circleEdgePoints
-			circleEdgePoints = int(value)
-			circleEdgePoints_label_value.configure(text=circleEdgePoints)
+			camera.circleEdgePoints = int(value)
+			circleEdgePoints_label_value.configure(text=camera.circleEdgePoints)
 
 		def setBrightness(value):
-			global brightness
-			brightness = int(value)
-			videoCapture.set(cv.CAP_PROP_BRIGHTNESS, brightness)
-			cameraBrightness_label_value.configure(text=brightness)
+			camera.brightness = int(value)
+			videoCapture.set(cv.CAP_PROP_BRIGHTNESS, camera.brightness)
+			cameraBrightness_label_value.configure(text=camera.brightness)
 
 		def setContrast(value):
-			global contrast
-			contrast = int(value)
-			videoCapture.set(cv.CAP_PROP_CONTRAST, contrast)
-			cameraContrast_label_value.configure(text=contrast)
+			camera.contrast = int(value)
+			videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)
+			cameraContrast_label_value.configure(text=camera.contrast)
 
 		def setSaturation(value):
-			global saturation
-			saturation = int(value)
-			videoCapture.set(cv.CAP_PROP_SATURATION, saturation)
-			cameraSaturation_label_value.configure(text=saturation)
+			camera.saturation = int(value)
+			videoCapture.set(cv.CAP_PROP_SATURATION, camera.saturation)
+			cameraSaturation_label_value.configure(text=camera.saturation)
 
 		def setHue(value):
-			global hue
-			hue = int(value)
-			videoCapture.set(cv.CAP_PROP_HUE, hue)
-			cameraHue_label_value.configure(text=hue)
+			camera.hue = int(value)
+			videoCapture.set(cv.CAP_PROP_HUE, camera.hue)
+			cameraHue_label_value.configure(text=camera.hue)
 
 		def setGain(value):
-			global gain
-			gain = int(value)
-			videoCapture.set(cv.CAP_PROP_GAIN, gain)
-			cameraGain_label_value.configure(text=gain)
+			camera.gain = int(value)
+			videoCapture.set(cv.CAP_PROP_GAIN, camera.gain)
+			cameraGain_label_value.configure(text=camera.gain)
 
 		def setExposure(value):
-			global exposure
-			exposure = int(value)
-			videoCapture.set(cv.CAP_PROP_EXPOSURE, exposure)
-			cameraExposure_label_value.configure(text=exposure)
+			camera.exposure = int(value)
+			videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)
+			cameraExposure_label_value.configure(text=camera.exposure)
 
 		def setAutoExposure(value):
-			global autoExposure
-			autoExposure = int(value)
-			videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, autoExposure)
-			cameraAutoExposure_label_value.configure(text=autoExposure)
+			camera.tog_autoE = int(value)
+			videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)
+			cameraAutoExposure_label_value.configure(text=camera.tog_autoE)
 
 		def setAutoFocus(value):
-			global autoFocus
-			autoFocus = int(value)
-			videoCapture.set(cv.CAP_PROP_AUTOFOCUS, autoFocus)
-			cameraAutoFocus_label_value.configure(text=autoFocus)
+			camera.tog_autoF = int(value)
+			videoCapture.set(cv.CAP_PROP_AUTOFOCUS, camera.tog_autoF)
+			cameraAutoFocus_label_value.configure(text=camera.tog_autoF)
 
 		## Sliders for circle detecting algorithm
 		# Blur level of frame
