@@ -20,16 +20,17 @@ class CircleDetectionTestModeWindows():
 		camera.brightness = brightness	# Brightness of capture
 		camera.fps = fps	# Framerate of capture
 		# TODO: have these variables passed in from Caller.py
-		camera.blur = 0
-		camera.dp = 0
-		camera.minDist = 0
-		camera.minRadius = 0
-		camera.maxRadius = 0
-		camera.circleSensitivity = 0
-		camera.circleEdgePoints = 0
-		camera.saturation = 0
+		camera.blur = 17
+		camera.dp = 1.2
+		camera.minDist = 10000
+		camera.minRadius = 5
+		camera.maxRadius = 50
+		camera.circleSensitivity = 100
+		camera.circleEdgePoints = 40
+		camera.saturation = 125
 		camera.hue = 0
-		camera.gain = 0
+		camera.gain = 10
+
 		camera.fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
 		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
         
@@ -87,10 +88,11 @@ class CircleDetectionTestModeWindows():
 
 			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
-			blurFrame = cv.GaussianBlur(grayFrame,(17,17),0)	# Make a copy of grayFrame where the frame has been blurred
+			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
-			circles = cv.HoughCircles(blurFrame, cv.HOUGH_GRADIENT,1.2 , 10000, 			# Find circles within the frame given these parameters
-                                     param1 = 100, param2 = 40, minRadius=10, maxRadius=28)	# The result will be a list of circles found
+			circles = cv.HoughCircles(blurFrame, cv.HOUGH_GRADIENT,camera.dp , camera.minDist, 			# Find circles within the frame given these parameters
+                                     param1 = camera.circleSensitivity, param2 = camera.circleEdgePoints,
+									 minRadius=camera.minRadius, maxRadius=camera.maxRadius)	# The result will be a list of circles found
 			if circles is not None:	# Are there circles detected in the frame
 				circles = np.uint16(np.around(circles))	# Convert circles to a numpy array
 				chosen = None   # Chosen circle from the frame
@@ -190,42 +192,42 @@ class CircleDetectionTestModeWindows():
 
 		def setBrightness(value):
 			camera.brightness = int(value)
-			videoCapture.set(cv.CAP_PROP_BRIGHTNESS, camera.brightness)
+			camera.videoCapture.set(cv.CAP_PROP_BRIGHTNESS, camera.brightness)
 			cameraBrightness_label_value.configure(text=camera.brightness)
 
 		def setContrast(value):
 			camera.contrast = int(value)
-			videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)
+			camera.videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)
 			cameraContrast_label_value.configure(text=camera.contrast)
 
 		def setSaturation(value):
 			camera.saturation = int(value)
-			videoCapture.set(cv.CAP_PROP_SATURATION, camera.saturation)
+			camera.videoCapture.set(cv.CAP_PROP_SATURATION, camera.saturation)
 			cameraSaturation_label_value.configure(text=camera.saturation)
 
 		def setHue(value):
 			camera.hue = int(value)
-			videoCapture.set(cv.CAP_PROP_HUE, camera.hue)
+			camera.videoCapture.set(cv.CAP_PROP_HUE, camera.hue)
 			cameraHue_label_value.configure(text=camera.hue)
 
 		def setGain(value):
 			camera.gain = int(value)
-			videoCapture.set(cv.CAP_PROP_GAIN, camera.gain)
+			camera.videoCapture.set(cv.CAP_PROP_GAIN, camera.gain)
 			cameraGain_label_value.configure(text=camera.gain)
 
 		def setExposure(value):
 			camera.exposure = int(value)
-			videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)
+			camera.videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)
 			cameraExposure_label_value.configure(text=camera.exposure)
 
 		def setAutoExposure(value):
 			camera.tog_autoE = int(value)
-			videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)
+			camera.videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)
 			cameraAutoExposure_label_value.configure(text=camera.tog_autoE)
 
 		def setAutoFocus(value):
 			camera.tog_autoF = int(value)
-			videoCapture.set(cv.CAP_PROP_AUTOFOCUS, camera.tog_autoF)
+			camera.videoCapture.set(cv.CAP_PROP_AUTOFOCUS, camera.tog_autoF)
 			cameraAutoFocus_label_value.configure(text=camera.tog_autoF)
 
 		## Sliders for circle detecting algorithm
@@ -236,10 +238,10 @@ class CircleDetectionTestModeWindows():
 		blurLevel_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=55, width=400, number_of_steps=27,
 			border_width=3, command=setBlurLevel)
-		blurLevel_slider.set(blurLevel)
+		blurLevel_slider.set(camera.blur)
 		blurLevel_slider.grid(row=0, column=1, pady=10, padx=10)
 		blurLevel_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=blurLevel, font=('Arial', 22))
+			master=algorithmFrame, text=camera.blur, font=('Arial', 22))
 		blurLevel_label_value.grid(row=0, column=2, pady=10, padx=10)	
 
 		# dp inverse ratio of resolution
@@ -249,10 +251,10 @@ class CircleDetectionTestModeWindows():
 		dp_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=5, width=400, number_of_steps=80,
 			border_width=3, command=setDp)
-		dp_slider.set(dp)
+		dp_slider.set(camera.dp)
 		dp_slider.grid(row=1, column=1, pady=10, padx=10)
 		dp_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=dp, font=('Arial', 22))
+			master=algorithmFrame, text=camera.dp, font=('Arial', 22))
 		dp_label_value.grid(row=1, column=2, pady=10, padx=10)
 		
 		# Minimum distance between circles
@@ -262,10 +264,10 @@ class CircleDetectionTestModeWindows():
 		minDist_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=100, width=400, number_of_steps=999,
 			border_width=3, command=setMinDist)
-		minDist_slider.set(minDist)
+		minDist_slider.set(camera.minDist)
 		minDist_slider.grid(row=2, column=1, pady=10, padx=10)
 		minDist_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=minDist, font=('Arial', 22))
+			master=algorithmFrame, text=camera.minDist, font=('Arial', 22))
 		minDist_label_value.grid(row=2, column=2, pady=10, padx=10)
 
 		# Minimum radius of circle
@@ -275,10 +277,10 @@ class CircleDetectionTestModeWindows():
 		minRadius_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199,
 			border_width=3, command=setMinRadius)
-		minRadius_slider.set(minRadiusVar)
+		minRadius_slider.set(camera.minRadius)
 		minRadius_slider.grid(row=3, column=1, pady=10, padx=10)
 		minRadius_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=minRadiusVar, font=('Arial', 22))
+			master=algorithmFrame, text=camera.minRadius, font=('Arial', 22))
 		minRadius_label_value.grid(row=3, column=2, pady=10, padx=10)
 
 		# Maximum radius of circle
@@ -288,10 +290,10 @@ class CircleDetectionTestModeWindows():
 		maxRadius_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=400, width=400, number_of_steps=399,
 			border_width=3, command=setMaxRadius)
-		maxRadius_slider.set(maxRadiusVar)
+		maxRadius_slider.set(camera.maxRadius)
 		maxRadius_slider.grid(row=4, column=1, pady=10, padx=10)
 		maxRadius_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=maxRadiusVar, font=('Arial', 22))
+			master=algorithmFrame, text=camera.maxRadius, font=('Arial', 22))
 		maxRadius_label_value.grid(row=4, column=2, pady=10, padx=10)
 
 		# Sensitivity to circle detection
@@ -301,10 +303,10 @@ class CircleDetectionTestModeWindows():
 		circleSensitivity_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199,
 			border_width=3, command=setCircleSensitivity)
-		circleSensitivity_slider.set(circleSensitivity)
+		circleSensitivity_slider.set(camera.circleSensitivity)
 		circleSensitivity_slider.grid(row=5, column=1, pady=10, padx=10)
 		circleSensitivity_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=circleSensitivity, font=('Arial', 22))
+			master=algorithmFrame, text=camera.circleSensitivity, font=('Arial', 22))
 		circleSensitivity_label_value.grid(row=5, column=2, pady=10, padx=10)
 
 		# Minimum # of edge points to declare a circle
@@ -314,10 +316,10 @@ class CircleDetectionTestModeWindows():
 		circleEdgePoints_slider = customtkinter.CTkSlider(
 			master=algorithmFrame, from_=4, to=100, width=400, number_of_steps=96,
 			border_width=3, command=setCircleEdgePoints)
-		circleEdgePoints_slider.set(circleEdgePoints)
+		circleEdgePoints_slider.set(camera.circleEdgePoints)
 		circleEdgePoints_slider.grid(row=6, column=1, pady=10, padx=10)
 		circleEdgePoints_label_value = customtkinter.CTkLabel(
-			master=algorithmFrame, text=circleEdgePoints, font=('Arial', 22))
+			master=algorithmFrame, text=camera.circleEdgePoints, font=('Arial', 22))
 		circleEdgePoints_label_value.grid(row=6, column=2, pady=10, padx=10)
 
 		## Sliders for camera settings
@@ -328,10 +330,10 @@ class CircleDetectionTestModeWindows():
 		cameraBrightness_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
 			border_width=3, command=setBrightness)
-		cameraBrightness_slider.set(brightness)
+		cameraBrightness_slider.set(camera.brightness)
 		cameraBrightness_slider.grid(row=0, column=4, pady=10, padx=10)
 		cameraBrightness_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=brightness, font=('Arial', 22))
+			master=cameraFrame, text=camera.brightness, font=('Arial', 22))
 		cameraBrightness_label_value.grid(row=0, column=5, pady=10, padx=10)
 
 		# Contrast of capture
@@ -341,10 +343,10 @@ class CircleDetectionTestModeWindows():
 		cameraContrast_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
 			border_width=3, command=setContrast)
-		cameraContrast_slider.set(contrast)
+		cameraContrast_slider.set(camera.contrast)
 		cameraContrast_slider.grid(row=1, column=4, pady=10, padx=10)
 		cameraContrast_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=contrast, font=('Arial', 22))
+			master=cameraFrame, text=camera.contrast, font=('Arial', 22))
 		cameraContrast_label_value.grid(row=1, column=5, pady=10, padx=10)
 		
 		# Saturation of capture
@@ -354,10 +356,10 @@ class CircleDetectionTestModeWindows():
 		cameraSaturation_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
 			border_width=3, command=setSaturation)
-		cameraSaturation_slider.set(saturation)
+		cameraSaturation_slider.set(camera.saturation)
 		cameraSaturation_slider.grid(row=2, column=4, pady=10, padx=10)
 		cameraSaturation_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=saturation, font=('Arial', 22))
+			master=cameraFrame, text=camera.saturation, font=('Arial', 22))
 		cameraSaturation_label_value.grid(row=2, column=5, pady=10, padx=10)
 
 		# Hue of capture (not applicable to my camera?)
@@ -367,10 +369,10 @@ class CircleDetectionTestModeWindows():
 		cameraHue_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
 			border_width=3, command=setHue)
-		cameraHue_slider.set(hue)
+		cameraHue_slider.set(camera.hue)
 		cameraHue_slider.grid(row=3, column=4, pady=10, padx=10)
 		cameraHue_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=hue, font=('Arial', 22))
+			master=cameraFrame, text=camera.hue, font=('Arial', 22))
 		cameraHue_label_value.grid(row=3, column=5, pady=10, padx=10)
 		
 
@@ -381,10 +383,10 @@ class CircleDetectionTestModeWindows():
 		cameraGain_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
 			border_width=3, command=setGain)
-		cameraGain_slider.set(gain)
+		cameraGain_slider.set(camera.gain)
 		cameraGain_slider.grid(row=4, column=4, pady=10, padx=10)
 		cameraGain_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=gain, font=('Arial', 22))
+			master=cameraFrame, text=camera.gain, font=('Arial', 22))
 		cameraGain_label_value.grid(row=4, column=5, pady=10, padx=10)
 
 		# Exposure of capture (not applicable to my camera?)
@@ -392,12 +394,12 @@ class CircleDetectionTestModeWindows():
 			master=cameraFrame, text="Camera Exposure", font=('Arial', 22))
 		cameraExposure_label.grid(row=5, column=3, pady=10, padx=10)
 		cameraExposure_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
+			master=cameraFrame, from_=-11, to=-1, width=400, number_of_steps=10,
 			border_width=3, command=setExposure)
-		cameraExposure_slider.set(exposure)
+		cameraExposure_slider.set(camera.exposure)
 		cameraExposure_slider.grid(row=5, column=4, pady=10, padx=10)
 		cameraExposure_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=exposure, font=('Arial', 22))
+			master=cameraFrame, text=camera.exposure, font=('Arial', 22))
 		cameraExposure_label_value.grid(row=5, column=5, pady=10, padx=10)
 
 		# Auto Exposure of capture
@@ -407,10 +409,10 @@ class CircleDetectionTestModeWindows():
 		cameraExposure_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1,
 			border_width=3, command=setAutoExposure)
-		cameraExposure_slider.set(autoExposure)
+		cameraExposure_slider.set(camera.tog_autoE)
 		cameraExposure_slider.grid(row=6, column=4, pady=10, padx=10)
 		cameraAutoExposure_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=autoExposure, font=('Arial', 22))
+			master=cameraFrame, text=camera.tog_autoE, font=('Arial', 22))
 		cameraAutoExposure_label_value.grid(row=6, column=5, pady=10, padx=10)
 
 		# Auto Focus of capture
@@ -420,10 +422,10 @@ class CircleDetectionTestModeWindows():
 		cameraExposure_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1,
 			border_width=3, command=setAutoFocus)
-		cameraExposure_slider.set(autoFocus)
+		cameraExposure_slider.set(camera.tog_autoF)
 		cameraExposure_slider.grid(row=7, column=4, pady=10, padx=10)
 		cameraAutoFocus_label_value = customtkinter.CTkLabel(
-			master=cameraFrame, text=autoFocus, font=('Arial', 22))
+			master=cameraFrame, text=camera.tog_autoF, font=('Arial', 22))
 		cameraAutoFocus_label_value.grid(row=7, column=5, pady=10, padx=10)
 
 		# Buttons
