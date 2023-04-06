@@ -41,7 +41,7 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
     objpoints = []  # 3d point in real world space
     imgpoints = []  # 2d points in image plane.
     frames = []  # Frames taken from camera
-    cam = cv.VideoCapture(camPortNum)
+    cam = cv.VideoCapture(camPortNum,cv.CAP_DSHOW)
 
     cam.set(cv.CAP_PROP_FRAME_WIDTH, 1280)  # Set camera frame width
     cam.set(cv.CAP_PROP_FRAME_HEIGHT, 720)  # Set camera frame height
