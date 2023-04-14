@@ -14,10 +14,10 @@ TODO:
 def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,cameraName,camZ):
     """
     :param gridwidth: Default 2.44 (cm)
-    :param startingX: default 0 (measured in holes from 0,0 hole)
-    :param startingY: default 0 (measured in holes from 0,0 hole)
-    :param chessh: default 7
-    :param chessw: default 9
+    :param startingX: Default 0 (measured in holes from 0,0 hole)
+    :param startingY: Default 0 (measured in holes from 0,0 hole)
+    :param chessh: Default 7
+    :param chessw: Default 9
     :param cameraName: ***Used in filename***
     :param camZ:  Measured by hand, distance from camera to startingX,startingY location (cm)
     :return:
