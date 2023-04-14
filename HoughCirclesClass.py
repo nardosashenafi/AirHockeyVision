@@ -72,7 +72,6 @@ class CircleDetectionTestModeWindows():
 
 		if testMode:
 			print("\nParameters AFTER assignment: ")
-			print(f"Camera.fourcc = {camera.fourcc}")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {round(camera.videoCapture.get(cv.CAP_PROP_FPS),1)}")
@@ -155,7 +154,7 @@ class CircleDetectionTestModeWindows():
 
 		root = customtkinter.CTk()
 		root.title('Program Settings')
-		#root.iconbitmap('./MyCode/AirHockeyIcon.ico')
+		root.iconbitmap('./AirHockeyIcon.ico')
 		#root.geometry('1438x900')
 		root.resizable(1,1)
 
