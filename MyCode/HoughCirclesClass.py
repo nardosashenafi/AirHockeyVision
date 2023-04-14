@@ -3,9 +3,13 @@ import time as t
 import cv2 as cv
 import numpy as np
 import math
+import os
 import sys
 import customtkinter
 import ConvertToWorldFunc as ctw
+import Calibrationfunc as cf
+
+from threading import Thread
 
 class CircleDetectionTestModeWindows():
 	def __init__(camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain):
@@ -35,7 +39,7 @@ class CircleDetectionTestModeWindows():
 		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
         
 	def detectionProgram(camera, testMode):
-		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
+		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
 		if testMode:
 			print("\nParameters BEFORE assignment: ")
@@ -79,7 +83,7 @@ class CircleDetectionTestModeWindows():
 	    
 			frame_counter += 1	# Frame is read successfully, so increment frame counter
 
-			undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
+			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
 			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
@@ -99,7 +103,7 @@ class CircleDetectionTestModeWindows():
 							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
 							#TODO: publish ros topic
-						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
+						#[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
@@ -110,7 +114,7 @@ class CircleDetectionTestModeWindows():
 			runtime_counter += runtime	# Get a total runtime of all loops
 			framerate = frame_counter / runtime_counter	# Calculate framerate
 
-			if cv.waitKey(1)  == 32:
+			if cv.waitKey(1) == 32:
 				print(f'Chosen[0]: {chosen[0]} Chosen[1]:', end=' ')
 				print(f'{chosen[1]} Chosen[2]: {chosen[2]}')
 				print(f'Image Matrix: {imgMtx}')
@@ -118,7 +122,7 @@ class CircleDetectionTestModeWindows():
 
 			if testMode:
 				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
+				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
 					print(f"Total Runtime: {runtime_counter:.3f} seconds")
@@ -142,7 +146,7 @@ class CircleDetectionTestModeWindows():
 
 		root = customtkinter.CTk()
 		root.title('Program Settings')
-		#root.iconbitmap('AirHockeyIcon.ico')
+		#root.iconbitmap('./MyCode/AirHockeyIcon.ico')
 		#root.geometry('1438x900')
 		root.resizable(1,1)
 
@@ -161,84 +165,167 @@ class CircleDetectionTestModeWindows():
 		## Definitions for updating value in GUI and variables
 		def setBlurLevel(value):
 			camera.blur = int(value)
+			blurLevel_slider.set(camera.blur)
 			blurLevel_label_value.configure(text=camera.blur)
 
 		def setDp(value):
-			camera.dp = round(value, 1)
+			camera.dp = round(float(value), 1)
+			dp_slider.set(camera.dp)
 			dp_label_value.configure(text=camera.dp)
 
 		def setMinDist(value):
 			camera.minDist = int(value)
+			minDist_slider.set(camera.minDist)
 			minDist_label_value.configure(text=camera.minDist)
 
 		def setMinRadius(value):
 			camera.minRadius = int(value)
+			minRadius_slider.set(camera.minRadius)
 			minRadius_label_value.configure(text=camera.minRadius)
 
 		def setMaxRadius(value):
 			camera.maxRadius = int(value)
+			maxRadius_slider.set(camera.maxRadius)
 			maxRadius_label_value.configure(text=camera.maxRadius)
 
 		def setCircleSensitivity(value):
 			camera.circleSensitivity = int(value)
+			circleSensitivity_slider.set(camera.circleSensitivity)
 			circleSensitivity_label_value.configure(text=camera.circleSensitivity)
 
 		def setCircleEdgePoints(value):
 			camera.circleEdgePoints = int(value)
+			circleEdgePoints_slider.set(camera.circleEdgePoints)
 			circleEdgePoints_label_value.configure(text=camera.circleEdgePoints)
 
 		def setBrightness(value):
 			camera.brightness = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_BRIGHTNESS, camera.brightness)
+			cameraBrightness_slider.set(camera.brightness)
 			cameraBrightness_label_value.configure(text=camera.brightness)
 
 		def setContrast(value):
 			camera.contrast = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_CONTRAST, camera.contrast)
+			cameraContrast_slider.set(camera.contrast)
 			cameraContrast_label_value.configure(text=camera.contrast)
 
 		def setSaturation(value):
 			camera.saturation = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_SATURATION, camera.saturation)
+			cameraSaturation_slider.set(camera.saturation)
 			cameraSaturation_label_value.configure(text=camera.saturation)
 
 		def setHue(value):
 			camera.hue = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_HUE, camera.hue)
+			cameraHue_slider.set(camera.hue)
 			cameraHue_label_value.configure(text=camera.hue)
 
 		def setGain(value):
 			camera.gain = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_GAIN, camera.gain)
+			cameraGain_slider.set(camera.gain)
 			cameraGain_label_value.configure(text=camera.gain)
 
 		def setExposure(value):
 			camera.exposure = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_EXPOSURE, camera.exposure)
+			cameraExposure_slider.set(camera.exposure)
 			cameraExposure_label_value.configure(text=camera.exposure)
 
 		def setAutoExposure(value):
 			camera.tog_autoE = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_AUTO_EXPOSURE, camera.tog_autoE)
+			cameraAutoExposure_slider.set(camera.tog_autoE)
 			cameraAutoExposure_label_value.configure(text=camera.tog_autoE)
+
+		def setFocus(value):
+			camera.focus = round(float(value),1)
+			camera.videoCapture.set(cv.CAP_PROP_FOCUS, camera.focus)
+			cameraFocus_slider.set(camera.focus)
+			cameraFocus_label_value.configure(text=camera.focus)
 
 		def setAutoFocus(value):
 			camera.tog_autoF = int(value)
 			camera.videoCapture.set(cv.CAP_PROP_AUTOFOCUS, camera.tog_autoF)
+			cameraAutoFocus_slider.set(camera.tog_autoF)
 			cameraAutoFocus_label_value.configure(text=camera.tog_autoF)
 
+		def setCamPortNum(value):
+			camera.cameraNumber = int(value)
+			camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
+			camPortNumber_entry.delete(0,"end")
+			camPortNumber_entry.insert(0,camera.cameraNumber)
+
 		def saveVariables():
-			#TODO save all variables
+			np.savez("ProgramVariables" + cameraName_entry.get(), 
+	    			 int(camPortNumber_entry.get()),camera.width,camera.height,
+					 camera.tog_autoF,camera.tog_autoE,camera.exposure,camera.focus,
+					 camera.contrast,camera.brightness,camera.fps,camera.blur,
+					 camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,
+					 camera.circleSensitivity,camera.circleEdgePoints,
+					 camera.saturation,camera.hue,camera.gain)
+			
+		def loadVariables(value):
+			# TODO - load all variables (calibraiton fields) from file name (value)
+			programVariables = np.load("ProgramVariables" + value + ".npz", allow_pickle=True)
+
+			setCamPortNum(programVariables['arr_0'])
+			# width - 'arr_1'
+			# height - 'arr_2'
+			setAutoFocus(programVariables['arr_3'])
+			setAutoExposure(programVariables['arr_4'])
+			setExposure(programVariables['arr_5'])
+			setFocus(programVariables['arr_6'])
+			setContrast(programVariables['arr_7'])
+			setBrightness(programVariables['arr_8'])
+			# fps - 'arr_9'
+			setBlurLevel(programVariables['arr_10'])
+			setDp(programVariables['arr_11'])
+			setMinDist(programVariables['arr_12'])
+			setMinRadius(programVariables['arr_13'])
+			setMaxRadius(programVariables['arr_14'])
+			setCircleSensitivity(programVariables['arr_15'])
+			setCircleEdgePoints(programVariables['arr_16'])
+			setSaturation(programVariables['arr_17'])
+			setHue(programVariables['arr_18'])
+			setGain(programVariables['arr_19'])
+		
+		def runCalibration():
+			cf.runCalibration(int(camPortNumber_entry.get()),int(calGridWidth_entry.get()),
+		     				  int(calStartingX_entry.get()),int(calStartingY_entry.get()),
+							  int(calChessH_entry.get()),int(calChessW_entry.get()),
+							  cameraName_entry.get(),int(calCameraZ_entry.get()))
+		
+		def startProgram():
+			# FIXME When moving focus to GUI it crashes
+			#Thread(target = camera.detectionProgram(1)).start()
+
+			#camera.videoCapture.release()	# Release webcam and close all windows
+			#cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
 			return
+		
+		def killCameraWindows():
+			camera.videoCapture.release()
+			cv.destroyAllWindows()
+					
+		def getNpzFiles():
+			npzFiles = []
+			for file in os.listdir("./"):
+				if file.endswith(".npz"):
+					file = file[:-4] # Remove .npz from end of name
+					file = file.removeprefix('ProgramVariables') # Strip all but camera name
+					npzFiles.append(file)
+			return npzFiles
 
 		## Components of algorithm frame
 		# Blur level of frame
 		blurLevel_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="Blur", font=('Arial', 22))
-		blurLevel_label.grid(row=0, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="Blur", font=('Arial', 22)).grid(
+				row=0, column=0, pady=10, padx=10)
 		blurLevel_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=55, width=400, number_of_steps=27,
-			border_width=3, command=setBlurLevel)
+			master=algorithmFrame, from_=1, to=55, width=400, number_of_steps=27, border_width=3, command=setBlurLevel)
 		blurLevel_slider.set(camera.blur)
 		blurLevel_slider.grid(row=0, column=1, pady=10, padx=10)
 		blurLevel_label_value = customtkinter.CTkLabel(
@@ -247,11 +334,10 @@ class CircleDetectionTestModeWindows():
 
 		# dp inverse ratio of resolution
 		dp_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="dp", font=('Arial', 22))
-		dp_label.grid(row=1, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="dp", font=('Arial', 22)).grid(
+				row=1, column=0, pady=10, padx=10)
 		dp_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=5, width=400, number_of_steps=80,
-			border_width=3, command=setDp)
+			master=algorithmFrame, from_=1, to=5, width=400, number_of_steps=80, border_width=3, command=setDp)
 		dp_slider.set(camera.dp)
 		dp_slider.grid(row=1, column=1, pady=10, padx=10)
 		dp_label_value = customtkinter.CTkLabel(
@@ -260,11 +346,10 @@ class CircleDetectionTestModeWindows():
 		
 		# Minimum distance between circles
 		minDist_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="MinDist", font=('Arial', 22))
-		minDist_label.grid(row=2, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="MinDist", font=('Arial', 22)).grid(
+				row=2, column=0, pady=10, padx=10)
 		minDist_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=100, width=400, number_of_steps=999,
-			border_width=3, command=setMinDist)
+			master=algorithmFrame, from_=1, to=100, width=400, number_of_steps=999, border_width=3, command=setMinDist)
 		minDist_slider.set(camera.minDist)
 		minDist_slider.grid(row=2, column=1, pady=10, padx=10)
 		minDist_label_value = customtkinter.CTkLabel(
@@ -273,11 +358,10 @@ class CircleDetectionTestModeWindows():
 
 		# Minimum radius of circle
 		minRadius_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="MinRadius", font=('Arial', 22))
-		minRadius_label.grid(row=3, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="MinRadius", font=('Arial', 22)).grid(
+				row=3, column=0, pady=10, padx=10)
 		minRadius_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199,
-			border_width=3, command=setMinRadius)
+			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199, border_width=3, command=setMinRadius)
 		minRadius_slider.set(camera.minRadius)
 		minRadius_slider.grid(row=3, column=1, pady=10, padx=10)
 		minRadius_label_value = customtkinter.CTkLabel(
@@ -286,11 +370,10 @@ class CircleDetectionTestModeWindows():
 
 		# Maximum radius of circle
 		maxRadius_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="MaxRadius", font=('Arial', 22))
-		maxRadius_label.grid(row=4, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="MaxRadius", font=('Arial', 22)).grid(
+				row=4, column=0, pady=10, padx=10)
 		maxRadius_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=400, width=400, number_of_steps=399,
-			border_width=3, command=setMaxRadius)
+			master=algorithmFrame, from_=1, to=400, width=400, number_of_steps=399,	border_width=3, command=setMaxRadius)
 		maxRadius_slider.set(camera.maxRadius)
 		maxRadius_slider.grid(row=4, column=1, pady=10, padx=10)
 		maxRadius_label_value = customtkinter.CTkLabel(
@@ -299,11 +382,10 @@ class CircleDetectionTestModeWindows():
 
 		# Sensitivity to circle detection
 		circleSensitivity_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="Circle Sensitivity", font=('Arial', 22))
-		circleSensitivity_label.grid(row=5, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="Circle Sensitivity", font=('Arial', 22)).grid(
+				row=5, column=0, pady=10, padx=10)
 		circleSensitivity_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199,
-			border_width=3, command=setCircleSensitivity)
+			master=algorithmFrame, from_=1, to=200, width=400, number_of_steps=199, border_width=3, command=setCircleSensitivity)
 		circleSensitivity_slider.set(camera.circleSensitivity)
 		circleSensitivity_slider.grid(row=5, column=1, pady=10, padx=10)
 		circleSensitivity_label_value = customtkinter.CTkLabel(
@@ -312,11 +394,10 @@ class CircleDetectionTestModeWindows():
 
 		# Minimum # of edge points to declare a circle
 		circleEdgePoints_label = customtkinter.CTkLabel(
-			master=algorithmFrame, text="# of edge points", font=('Arial', 22))
-		circleEdgePoints_label.grid(row=6, column=0, pady=10, padx=10)
+			master=algorithmFrame, text="# of edge points", font=('Arial', 22)).grid(
+				row=6, column=0, pady=10, padx=10)
 		circleEdgePoints_slider = customtkinter.CTkSlider(
-			master=algorithmFrame, from_=4, to=100, width=400, number_of_steps=96,
-			border_width=3, command=setCircleEdgePoints)
+			master=algorithmFrame, from_=4, to=100, width=400, number_of_steps=96, border_width=3, command=setCircleEdgePoints)
 		circleEdgePoints_slider.set(camera.circleEdgePoints)
 		circleEdgePoints_slider.grid(row=6, column=1, pady=10, padx=10)
 		circleEdgePoints_label_value = customtkinter.CTkLabel(
@@ -326,11 +407,10 @@ class CircleDetectionTestModeWindows():
 		## Components of camera frame
 		# Brightness of capture
 		cameraBrightness_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Brightness", font=('Arial', 22))
-		cameraBrightness_label.grid(row=0, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Brightness", font=('Arial', 22)).grid(
+				row=0, column=3, pady=10, padx=10)
 		cameraBrightness_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
-			border_width=3, command=setBrightness)
+			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setBrightness)
 		cameraBrightness_slider.set(camera.brightness)
 		cameraBrightness_slider.grid(row=0, column=4, pady=10, padx=10)
 		cameraBrightness_label_value = customtkinter.CTkLabel(
@@ -339,11 +419,10 @@ class CircleDetectionTestModeWindows():
 
 		# Contrast of capture
 		cameraContrast_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Contrast", font=('Arial', 22))
-		cameraContrast_label.grid(row=1, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Contrast", font=('Arial', 22)).grid(
+				row=1, column=3, pady=10, padx=10)
 		cameraContrast_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
-			border_width=3, command=setContrast)
+			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setContrast)
 		cameraContrast_slider.set(camera.contrast)
 		cameraContrast_slider.grid(row=1, column=4, pady=10, padx=10)
 		cameraContrast_label_value = customtkinter.CTkLabel(
@@ -352,11 +431,10 @@ class CircleDetectionTestModeWindows():
 		
 		# Saturation of capture
 		cameraSaturation_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Saturation", font=('Arial', 22))
-		cameraSaturation_label.grid(row=2, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Saturation", font=('Arial', 22)).grid(
+				row=2, column=3, pady=10, padx=10)
 		cameraSaturation_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
-			border_width=3, command=setSaturation)
+			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setSaturation)
 		cameraSaturation_slider.set(camera.saturation)
 		cameraSaturation_slider.grid(row=2, column=4, pady=10, padx=10)
 		cameraSaturation_label_value = customtkinter.CTkLabel(
@@ -365,11 +443,10 @@ class CircleDetectionTestModeWindows():
 
 		# Hue of capture (not applicable to my camera?)
 		cameraHue_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Hue", font=('Arial', 22))
-		cameraHue_label.grid(row=3, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Hue", font=('Arial', 22)).grid(
+				row=3, column=3, pady=10, padx=10)
 		cameraHue_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
-			border_width=3, command=setHue)
+			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setHue)
 		cameraHue_slider.set(camera.hue)
 		cameraHue_slider.grid(row=3, column=4, pady=10, padx=10)
 		cameraHue_label_value = customtkinter.CTkLabel(
@@ -378,11 +455,10 @@ class CircleDetectionTestModeWindows():
 		
 		# Gain of capture
 		cameraGain_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Gain", font=('Arial', 22))
-		cameraGain_label.grid(row=4, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Gain", font=('Arial', 22)).grid(
+				row=4, column=3, pady=10, padx=10)
 		cameraGain_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255,
-			border_width=3, command=setGain)
+			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setGain)
 		cameraGain_slider.set(camera.gain)
 		cameraGain_slider.grid(row=4, column=4, pady=10, padx=10)
 		cameraGain_label_value = customtkinter.CTkLabel(
@@ -391,11 +467,10 @@ class CircleDetectionTestModeWindows():
 
 		# Exposure of capture
 		cameraExposure_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Exposure", font=('Arial', 22))
-		cameraExposure_label.grid(row=5, column=3, pady=10, padx=10)
+			master=cameraFrame, text="Camera Exposure", font=('Arial', 22)).grid(
+				row=5, column=3, pady=10, padx=10)
 		cameraExposure_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=-11, to=-1, width=400, number_of_steps=10,
-			border_width=3, command=setExposure)
+			master=cameraFrame, from_=-11, to=-1, width=400, number_of_steps=10, border_width=3, command=setExposure)
 		cameraExposure_slider.set(camera.exposure)
 		cameraExposure_slider.grid(row=5, column=4, pady=10, padx=10)
 		cameraExposure_label_value = customtkinter.CTkLabel(
@@ -403,94 +478,132 @@ class CircleDetectionTestModeWindows():
 		cameraExposure_label_value.grid(row=5, column=5, pady=10, padx=10)
 
 		# Auto Exposure of capture
-		cameraExposure_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Auto Exposure", font=('Arial', 22))
-		cameraExposure_label.grid(row=6, column=3, pady=10, padx=10)
-		cameraExposure_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1,
-			border_width=3, command=setAutoExposure)
-		cameraExposure_slider.set(camera.tog_autoE)
-		cameraExposure_slider.grid(row=6, column=4, pady=10, padx=10)
+		cameraAutoExposure_label = customtkinter.CTkLabel(
+			master=cameraFrame, text="Camera Auto Exposure", font=('Arial', 22)).grid(
+				row=6, column=3, pady=10, padx=10)
+		cameraAutoExposure_slider = customtkinter.CTkSlider(
+			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1, border_width=3, command=setAutoExposure)
+		cameraAutoExposure_slider.set(camera.tog_autoE)
+		cameraAutoExposure_slider.grid(row=6, column=4, pady=10, padx=10)
 		cameraAutoExposure_label_value = customtkinter.CTkLabel(
 			master=cameraFrame, text=camera.tog_autoE, font=('Arial', 22))
 		cameraAutoExposure_label_value.grid(row=6, column=5, pady=10, padx=10)
 
+		# Focus of capture
+		cameraFocus_label = customtkinter.CTkLabel(
+			master=cameraFrame, text="Camera Focus", font=('Arial', 22)).grid(
+				row=7, column=3, pady=10, padx=10)
+		cameraFocus_slider = customtkinter.CTkSlider(
+			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=10, border_width=3, command=setFocus)
+		cameraFocus_slider.set(camera.focus)
+		cameraFocus_slider.grid(row=7, column=4, pady=10, padx=10)
+		cameraFocus_label_value = customtkinter.CTkLabel(
+			master=cameraFrame, text=camera.focus, font=('Arial', 22))
+		cameraFocus_label_value.grid(row=7, column=5, pady=10, padx=10)
+
 		# Auto Focus of capture
-		cameraExposure_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Auto Focus", font=('Arial', 22))
-		cameraExposure_label.grid(row=7, column=3, pady=10, padx=10)
-		cameraExposure_slider = customtkinter.CTkSlider(
-			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1,
-			border_width=3, command=setAutoFocus)
-		cameraExposure_slider.set(camera.tog_autoF)
-		cameraExposure_slider.grid(row=7, column=4, pady=10, padx=10)
+		cameraAutoFocus_label = customtkinter.CTkLabel(
+			master=cameraFrame, text="Camera Auto Focus", font=('Arial', 22)).grid(
+				row=8, column=3, pady=10, padx=10)
+		cameraAutoFocus_slider = customtkinter.CTkSlider(
+			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1, border_width=3, command=setAutoFocus)
+		cameraAutoFocus_slider.set(camera.tog_autoF)
+		cameraAutoFocus_slider.grid(row=8, column=4, pady=10, padx=10)
 		cameraAutoFocus_label_value = customtkinter.CTkLabel(
 			master=cameraFrame, text=camera.tog_autoF, font=('Arial', 22))
-		cameraAutoFocus_label_value.grid(row=7, column=5, pady=10, padx=10)
+		cameraAutoFocus_label_value.grid(row=8, column=5, pady=10, padx=10)
 
 		## Components of calibration frame
 		# Calibration Grid Width (Default 3.0 (cm))
 		calGridWidth_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal grid width", font=('Arial', 22))
-		calGridWidth_label.grid(row=0, column=0, pady=10, padx=10)
-		calGridWidth_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calGridWidth_entry.grid(row=0, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal grid width", font=('Arial', 22)).grid(
+				row=1, column=0, pady=10, padx=10)
+		calGridWidth_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Default: 2.44 (cm)', width=435, height=25, corner_radius=10)
+		calGridWidth_entry.grid(row=1, column=1, pady=10, padx=10)
 
 		# Calibration starting X (measured in holes from 0,0 hole)
 		calStartingX_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal starting X", font=('Arial', 22))
-		calStartingX_label.grid(row=1, column=0, pady=10, padx=10)
-		calStartingX_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calStartingX_entry.grid(row=1, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal starting X", font=('Arial', 22)).grid(
+				row=2, column=0, pady=10, padx=10)
+		calStartingX_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Default: 0 (Measured in holes from 0,0 hole)', width=435, height=25, corner_radius=10)
+		calStartingX_entry.grid(row=2, column=1, pady=10, padx=10)
 
 		# Calibration starting Y (measured in holes from 0,0 hole)
 		calStartingY_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal starting Y", font=('Arial', 22))
-		calStartingY_label.grid(row=2, column=0, pady=10, padx=10)
-		calStartingY_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calStartingY_entry.grid(row=2, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal starting Y", font=('Arial', 22)).grid(
+				row=3, column=0, pady=10, padx=10)
+		calStartingY_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Default: 0 (Measured in holes from 0,0 hole)', width=435, height=25, corner_radius=10)
+		calStartingY_entry.grid(row=3, column=1, pady=10, padx=10)
 
 		# Calibration chess height (default 14)
 		calChessH_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal chess height", font=('Arial', 22))
-		calChessH_label.grid(row=3, column=0, pady=10, padx=10)
-		calChessH_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calChessH_entry.grid(row=3, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal chess height", font=('Arial', 22)).grid(
+				row=4, column=0, pady=10, padx=10)
+		calChessH_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Default: 7 (squares)', width=435, height=25, corner_radius=10)
+		calChessH_entry.grid(row=4, column=1, pady=10, padx=10)
 
 		# Calibration chess width (default 9)
 		calChessW_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal chess width", font=('Arial', 22))
-		calChessW_label.grid(row=4, column=0, pady=10, padx=10)
-		calChessW_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calChessW_entry.grid(row=4, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal chess width", font=('Arial', 22)).grid(
+				row=5, column=0, pady=10, padx=10)
+		calChessW_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Default: 9 (squares)', width=435, height=25, corner_radius=10)
+		calChessW_entry.grid(row=5, column=1, pady=10, padx=10)
 
 		# Calibration camera z distance (Measured by hand, the distance from camera to startingX, startingY location (cm))
 		calCameraZ_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal Z distance", font=('Arial', 22))
-		calCameraZ_label.grid(row=5, column=0, pady=10, padx=10)
-		calCameraZ_entry = customtkinter.CTkEntry(master=calibrationFrame, width=400,
-                               height=25, corner_radius=10)
-		calCameraZ_entry.grid(row=5, column=1, pady=10, padx=10)
+			master=calibrationFrame, text="Cal Z distance", font=('Arial', 22)).grid(
+				row=6, column=0, pady=10, padx=10)
+		calCameraZ_entry = customtkinter.CTkEntry(
+			master=calibrationFrame, placeholder_text='Measured: Distance from camera to startingX,startingY location (cm)', width=435, height=25, corner_radius=10)
+		calCameraZ_entry.grid(row=6, column=1, pady=10, padx=10)
 
 		## Components of button frame
+		# Camera Port Number (Serial Port)
+		camPortNumber_label = customtkinter.CTkLabel(
+			master=buttonFrame, text="Camera Port #", font=('Arial', 22)).grid(
+				row=0, column=0, pady=10, padx=10)
+		camPortNumber_entry = customtkinter.CTkEntry(
+			master=buttonFrame, placeholder_text='Default: 0 or 1', font=('Arial', 18), width=200, height=25, corner_radius=10)
+		camPortNumber_entry.grid(row=0, column=1, pady=10, padx=10)
+
 		# Camera name (used in filename of stored variable files)
-		calCameraName_label = customtkinter.CTkLabel(
-			master=buttonFrame, text="Camera name", font=('Arial', 22))
-		calCameraName_label.grid(row=0, column=0, pady=10, padx=10)
-		calCameraName_entry = customtkinter.CTkEntry(master=buttonFrame, width=375,
-                               height=25, corner_radius=10)
-		calCameraName_entry.grid(row=0, column=1, pady=10, padx=10)
+		cameraNameSave_label = customtkinter.CTkLabel(
+			master=buttonFrame, text="Camera Name", font=('Arial', 22)).grid(
+				row=1, column=0, pady=10, padx=10)
+		cameraName_entry = customtkinter.CTkEntry(
+			master=buttonFrame, placeholder_text='Default', font=('Arial', 18), width=200, height=25, corner_radius=10)
+		cameraName_entry.grid(row=1, column=1, pady=10, padx=10)
 		customtkinter.CTkButton(
-			master=buttonFrame, text='Save Variables', command=saveVariables).grid(
-				row=0, column=2, pady=10, padx=10)
+			master=buttonFrame, text='Save Variables', font=('Arial', 18), height=80, command=saveVariables).grid(
+				row=0, column=2, rowspan=2, pady=10, padx=10)
+
+		# Load variables from files shown in option menu
+		loadVariables_label = customtkinter.CTkLabel(
+			master=buttonFrame, text="Load Variables", font=('Arial', 22)).grid(
+				row=2, column=0, pady=10, padx=10)
+		customtkinter.CTkOptionMenu(
+			master=buttonFrame, values=getNpzFiles(), font=('Arial', 18), width=362, command=loadVariables).grid(
+				row=2, column=1, columnspan=2, padx=10, pady=10)
 
 		customtkinter.CTkButton(
-			master=buttonFrame, text='Quit', command=root.quit).grid(
-				row=1, column=2, pady=10, padx=10)
+			master=buttonFrame, text='Close GUI', font=('Arial', 18), height=135, command=root.quit).grid(
+				row=0, column=3, rowspan=3, pady=10, padx=10)
+		
+		customtkinter.CTkButton(
+			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=killCameraWindows).grid(
+				row=3, column=3, rowspan=2, pady=10, padx=10)
+		
+		customtkinter.CTkButton(
+			master=buttonFrame, text='Run Calibration', font=('Arial', 18), width=530, command=runCalibration).grid(
+				row=3, column=0, columnspan=3, pady=10, padx=10)
+
+		customtkinter.CTkButton(
+			master=buttonFrame, text='Start Program', font=('Arial', 18), width=530, command=startProgram).grid(
+				row=4, column=0, columnspan=3, pady=10, padx=10)
 		
 		root.mainloop()
