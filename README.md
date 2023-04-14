@@ -4,5 +4,5 @@ Needed functions to run are:
 -Calibrate.py
 -Calibrationfunc.py
 -Caller.py
--ConverToWorldFunc.py
+-ConvertToWorldFunc.py
 -HoughCirclesClass.py
