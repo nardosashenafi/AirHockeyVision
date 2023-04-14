@@ -12,6 +12,9 @@ import Calibrationfunc as cf
 from threading import Thread
 
 class CircleDetectionTestModeWindows():
+	def getCoords(camera):			# NOT USED
+		return camera.coordinates	# NOT USED
+
 	def __init__(camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain):
 		camera.cameraNumber = cameraNumber	# Serial port for camera
 		camera.width = width	# Width of frame for capture
@@ -41,12 +44,20 @@ class CircleDetectionTestModeWindows():
 	def detectionProgram(camera, testMode):
 		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
+		def fourccTranslator(fourccDec):
+			if(fourccDec == 844715353):
+				return 'YUY2'
+			elif(fourccDec == 1196444237):
+				return 'MJPG'
+			else:
+				return (f'{fourccDec} not recognized')
+		
 		if testMode:
 			print("\nParameters BEFORE assignment: ")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
-			print(f"FOURCC: {camera.videoCapture.get(cv.CAP_PROP_FOURCC)}")
+			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
         
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
@@ -61,10 +72,11 @@ class CircleDetectionTestModeWindows():
 
 		if testMode:
 			print("\nParameters AFTER assignment: ")
+			print(f"Camera.fourcc = {camera.fourcc}")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
-			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
-			print(f"FOURCC: {camera.videoCapture.get(cv.CAP_PROP_FOURCC)}")
+			print(f"FPS: {round(camera.videoCapture.get(cv.CAP_PROP_FPS),1)}")
+			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
 			print(f"Settings {camera.videoCapture.get(cv.CAP_PROP_SETTINGS)}")
             
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
@@ -136,9 +148,6 @@ class CircleDetectionTestModeWindows():
 		camera.videoCapture.release()	# Release webcam and close all windows
 		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
 		sys.exit()	# Terminate the program
-        
-	def getCoords(camera):			# NOT USED
-		return camera.coordinates	# NOT USED
 	
 	def createGUI(camera):
 		customtkinter.set_appearance_mode('System')
