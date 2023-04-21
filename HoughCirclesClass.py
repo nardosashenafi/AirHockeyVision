@@ -12,7 +12,7 @@ import Calibrationfunc as cf
 from threading import Thread
 
 class CircleDetectionTestModeWindows():
-	def __init__(camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain):
+	def __init__(camera,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,brightness,contrast,saturation,hue,gain,exposure,tog_autoE,focus,tog_autoF,cameraNumber,width,height,fps):
 		camera.blur = blur # Blur level of Gaussian filter
 		camera.dp = dp # Inverse ratio of resolution of capture
 		camera.minDist = minDist # minimum distance between circles
@@ -33,18 +33,16 @@ class CircleDetectionTestModeWindows():
 		camera.width = width	# Width of frame for capture
 		camera.height = height	# Height of frame for capture
 		camera.fps = fps	# Framerate of capture
-		
-		
-		
 
+		# Initialize for later use
 		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
 		camera.frame_counter = 0 # Total number of frames detected by the program during runtime
 		camera.runtime_counter = 0 # Total runtime of all loops added up
 		camera.circle_counter = 0 # Total number of circles detected by the program during runtime
-
 		camera.redo = 0 # will program relaunch after closing
 		camera.newParams = [camera.cameraNumber,camera.width,camera.height,camera.tog_autoF,camera.tog_autoE,camera.exposure,camera.focus,camera.contrast,camera.brightness,camera.fps,camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleSensitivity,camera.circleEdgePoints,camera.saturation,camera.hue,camera.gain]
 
+		# Initialize camera capture	
 		camera.fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
 		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
 

@@ -9,9 +9,8 @@ from threading import Thread
 import time as t
 
 def startup():
-	#camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain
-	camera = CircleDetectionTestModeWindows(0,1280,720,0,0,-7,255,75,175,60,17,1.2,10000,5,50,100,40,125,0,10)
-
+ 	#camera,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,brightness,contrast,saturation,hue,gain,exposure,tog_autoE,focus,tog_autoF,cameraNumber,width,height,fps
+	camera = CircleDetectionTestModeWindows(17,1.2,10000,5,50,100,40,175,75,125,0,10,-7,0,255,1,0,1280,720,60)
 	mode = 1 # 0 - run mode, 1 - test mode
 	Thread(target = camera.createGUI).start()
 	redo = camera.detectionProgram(mode)
