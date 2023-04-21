@@ -17,9 +17,9 @@ def startup():
 	redo = camera.detectionProgram(mode)
 
 	if redo:
-		print("Your mom")
-		t.sleep(10)
-		restart(camera.newParams, mode)
+		print("Program is going to restart")
+		#t.sleep(10)
+		#restart(camera.newParams, mode)
 
 def restart(newParams, mode):
 	#camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain
@@ -34,4 +34,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-    

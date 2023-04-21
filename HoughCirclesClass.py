@@ -12,23 +12,7 @@ import Calibrationfunc as cf
 from threading import Thread
 
 class CircleDetectionTestModeWindows():
-	def getCoords(camera):			# NOT USED
-		return camera.coordinates	# NOT USED
-
 	def __init__(camera,cameraNumber,width,height,tog_autoF,tog_autoE,exposure,focus,contrast,brightness,fps,blur,dp,minDist,minRadius,maxRadius,circleSensitivity,circleEdgePoints,saturation,hue,gain):
-		camera.cameraNumber = cameraNumber	# Serial port for camera
-		camera.width = width	# Width of frame for capture
-		camera.height = height	# Height of frame for capture
-		camera.tog_autoF = tog_autoF	# Toggle autofocus of capture
-		camera.tog_autoE = tog_autoE	# Toggle autoexposure of capture
-		camera.exposure = exposure	# Exposure of capture
-		camera.focus = focus	# Focus of capture
-		camera.contrast = contrast	# Contrast of capture
-		camera.brightness = brightness	# Brightness of capture
-		camera.fps = fps	# Framerate of capture
-		camera.saturation = saturation # Saturation of capture
-		camera.hue = hue # Hue of capture
-		camera.gain = gain # Gain of capture
 		camera.blur = blur # Blur level of Gaussian filter
 		camera.dp = dp # Inverse ratio of resolution of capture
 		camera.minDist = minDist # minimum distance between circles
@@ -36,12 +20,52 @@ class CircleDetectionTestModeWindows():
 		camera.maxRadius = maxRadius # maximum radius of circle to be detected
 		camera.circleSensitivity = circleSensitivity # sensitivity of circles to be detected
 		camera.circleEdgePoints = circleEdgePoints # number of edge points necessary to declare a circle
+		camera.brightness = brightness	# Brightness of capture
+		camera.contrast = contrast	# Contrast of capture
+		camera.saturation = saturation # Saturation of capture
+		camera.hue = hue # Hue of capture
+		camera.gain = gain # Gain of capture
+		camera.exposure = exposure	# Exposure of capture
+		camera.tog_autoE = tog_autoE	# Toggle autoexposure of capture
+		camera.focus = focus	# Focus of capture
+		camera.tog_autoF = tog_autoF	# Toggle autofocus of capture
+		camera.cameraNumber = cameraNumber	# Serial port for camera
+		camera.width = width	# Width of frame for capture
+		camera.height = height	# Height of frame for capture
+		camera.fps = fps	# Framerate of capture
+		
+		
+		
+
+		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
+		camera.frame_counter = 0 # Total number of frames detected by the program during runtime
+		camera.runtime_counter = 0 # Total runtime of all loops added up
+		camera.circle_counter = 0 # Total number of circles detected by the program during runtime
+
 		camera.redo = 0 # will program relaunch after closing
 		camera.newParams = [camera.cameraNumber,camera.width,camera.height,camera.tog_autoF,camera.tog_autoE,camera.exposure,camera.focus,camera.contrast,camera.brightness,camera.fps,camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleSensitivity,camera.circleEdgePoints,camera.saturation,camera.hue,camera.gain]
 
-
 		camera.fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
 		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
+
+	def getCoords(camera):			# NOT USED
+		return camera.coordinates	# NOT USED
+	
+	def killCameraWindows(camera):
+		camera.videoCapture.release()	# Release webcam and close all windows
+		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
+
+	def outputRunningSpecs(camera):
+		print(f"\n--------Program specs--------")
+		print(f"Total runtime: {camera.runtime_counter:.3f} seconds")
+		print(f"Total frames captured: {camera.frame_counter:.0f}")
+		print(f"Total circles found: {camera.circle_counter:.0f}")
+		print(f"FPS: {camera.framerate:.3f}")
+		if camera.circle_counter > 0:
+			print(f"Processing speed {(camera.runtime_counter/camera.circle_counter):.3f} seconds")
+		if camera.frame_counter > 0:
+			print(f"Accuracy: {(100*(camera.circle_counter/camera.frame_counter)):.3f}%")
+		print("-----------------------------")
         
 	def detectionProgram(camera, testMode):
 		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
@@ -83,10 +107,7 @@ class CircleDetectionTestModeWindows():
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
 		runtime = 0	# Runtime of individual loop (each frame)
-		runtime_counter = 0	# Total runtime of all loops added up
 		start_time = 0	# Starting time of each loop
-		frame_counter = 0	# Total number of frames detected by the program during runtime
-		circle_counter = 0	# Total number of circles detected by the program during runtime
         
 		while True:
 			start_time = t.perf_counter()	# Time how long the loop will take to run
@@ -94,7 +115,7 @@ class CircleDetectionTestModeWindows():
 			camera.ret, frame = camera.videoCapture.read()	# ret is a boolean: was it able to capture the frame successfully
 			if not camera.ret: break	# If frame is not read successfully, end program
 	    
-			frame_counter += 1	# Frame is read successfully, so increment frame counter
+			camera.frame_counter += 1	# Frame is read successfully, so increment frame counter
 
 			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
@@ -121,11 +142,11 @@ class CircleDetectionTestModeWindows():
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
 					prevCircle = chosen	# Set the previous circle equal to the chosen circle at the end of the loop
-					circle_counter += 1	# Circle is drawn, so increment circle counter
+					camera.circle_counter += 1	# Circle is drawn, so increment circle counter
 
 			runtime = t.perf_counter() - start_time 	# Time how long the loop took to run
-			runtime_counter += runtime	# Get a total runtime of all loops
-			framerate = frame_counter / runtime_counter	# Calculate framerate
+			camera.runtime_counter += runtime	# Get a total runtime of all loops
+			camera.framerate = camera.frame_counter / camera.runtime_counter	# Calculate framerate
 
 			if cv.waitKey(1) == 32:
 				print(f'Chosen[0]: {chosen[0]} Chosen[1]:', end=' ')
@@ -138,19 +159,10 @@ class CircleDetectionTestModeWindows():
 				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
-					print(f"\nProgram specs:")
-					print(f"Total Runtime: {runtime_counter:.3f} seconds")
-					print(f"Total Frames: {frame_counter:.0f}")
-					print(f"FPS: {framerate:.3f}")
-					if circle_counter != 0:
-						print(f"Processing speed {(runtime_counter/circle_counter):.3f} seconds")
-					if frame_counter != 0:
-						print(f"Accuracy: {(100*(circle_counter/frame_counter)):.3f}%")
-				camera.videoCapture.release()	# Release webcam and close all windows
-				cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
+					camera.outputRunningSpecs()
+				camera.killCameraWindows()
 				return camera.redo
-		camera.videoCapture.release()	# Release webcam and close all windows
-		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
+		camera.killCameraWindows()
 		return camera.redo
 				
 	
@@ -318,7 +330,6 @@ class CircleDetectionTestModeWindows():
 			try:
 				if(camera.ret):
 					camera.videoCapture.release()
-					print("Did we make it to here")
 					cv.destroyAllWindows()
 				else:
 					return
@@ -329,6 +340,7 @@ class CircleDetectionTestModeWindows():
 			camera.root.quit()
 
 		def endProgram():
+			camera.outputRunningSpecs()
 			killCameraWindows()
 			killGUI()
 
