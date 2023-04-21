@@ -148,8 +148,9 @@ class CircleDetectionTestModeWindows():
 						print(f"Accuracy: {(100*(circle_counter/frame_counter)):.3f}%")
 				camera.videoCapture.release()	# Release webcam and close all windows
 				cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
-				#return 1
 				return camera.redo
+		camera.videoCapture.release()	# Release webcam and close all windows
+		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
 		return camera.redo
 				
 	
