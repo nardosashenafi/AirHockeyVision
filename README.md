@@ -1,4 +1,12 @@
 # AirHockeyVision
+## Author Information
+- GUI
+    - Roscoe Ambrose
+- Camera
+    - Haston LaGrone
+- Calibration
+    - Daniel Pullicar
+    - Mason Cannon
 
 ## Needed functions to run are:
 - Calibrate.py
