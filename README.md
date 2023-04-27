@@ -21,5 +21,3 @@
     - Fix: Maybe issue with threading.
 - Spamming of Start Program button is not accounted for
     - Fix: if(camera.ret) 
-- Clicking the End Program button after closing the camera window does not work properly. Should output a warning message.
-    - Fix: Not sure yet.
