@@ -35,6 +35,7 @@ class CircleDetectionTestModeWindows():
 		camera.fps = fps	# Framerate of capture
 
 		# Initialize for later use
+		camera.needsReinitialized = 0 # Camera has been reinitialized -> set to 0 (0 = no, 1 = yes)
 		camera.testMode = 0 # Does the user want the camera show windows and console output (0 = no, 1 = yes)
 		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
 		camera.frame_counter = 0 # Total number of frames detected by the program during runtime
@@ -46,14 +47,22 @@ class CircleDetectionTestModeWindows():
 		camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Set port number for camera (DSHOW → DirectShow)
 
 	def getCoords(camera):			# NOT USED
-		return camera.coordinates	# NOT USED
+		return camera.coordinates	# NOT INITIALIZED
 	
 	def killCameraWindows(camera):
-		camera.videoCapture.release()	# Release webcam and close all windows
-		cv.destroyAllWindows()	# Close all OpenCV windows (does not close the GUI)
+		try:
+			if(camera.ret):
+				camera.outputRunningSpecs()
+				camera.videoCapture.release() # Release webcam and close all windows
+				cv.destroyAllWindows() # Close all OpenCV windows
+				camera.needsReinitialized = 1
+			else:
+				return
+		except AttributeError:
+			print("Attempted to close camera when camera is not open. If you want to close, than click \"Close GUI\"")
 
 	def outputRunningSpecs(camera):
-		print(f"\n--------Program specs--------")
+		print(f"\n-----------Program specs-----------")
 		print(f"Total runtime: {camera.runtime_counter:.3f} seconds")
 		print(f"Total frames captured: {camera.frame_counter:.0f}")
 		print(f"Total circles found: {camera.circle_counter:.0f}")
@@ -62,7 +71,7 @@ class CircleDetectionTestModeWindows():
 			print(f"Processing speed {(camera.runtime_counter/camera.circle_counter):.3f} seconds")
 		if camera.frame_counter > 0:
 			print(f"Accuracy: {(100*(camera.circle_counter/camera.frame_counter)):.3f}%")
-		print("-----------------------------")
+		print("-----------------------------------")
         
 	def detectionProgram(camera, testMode: bool):
 		camera.testMode = testMode	# Set test mode
@@ -76,12 +85,13 @@ class CircleDetectionTestModeWindows():
 			else:
 				return (f'{fourccDec} not recognized')
 		
-		if testMode:
-			print("\nParameters BEFORE assignment: ")
+		if camera.testMode:
+			print("\n---------Parameters BEFORE---------")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
 			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
+			print("-----------------------------------")
         
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
@@ -94,12 +104,13 @@ class CircleDetectionTestModeWindows():
 		camera.videoCapture.set(cv.CAP_PROP_FPS, camera.fps)	# Set camera fps
 		camera.videoCapture.set(cv.CAP_PROP_FOURCC,camera.fourcc)	# Set camera compression format
 
-		if testMode:
-			print("\nParameters AFTER assignment: ")
+		if camera.testMode:
+			print("\n----------Parameters AFTER---------")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {round(camera.videoCapture.get(cv.CAP_PROP_FPS),1)}")
 			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
+			print("-----------------------------------")
             
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
@@ -151,17 +162,14 @@ class CircleDetectionTestModeWindows():
 				print(f'Image Matrix: {imgMtx}')
 				print(f'Object Position: {objpos}')
 
-			if testMode:
+			if camera.testMode:
 				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
 				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
-				if testMode:
-					camera.outputRunningSpecs()
 				camera.killCameraWindows()
 				return
 		camera.killCameraWindows()
-		return
-				
+		return			
 	
 	def createGUI(camera):
 		customtkinter.set_appearance_mode('System')
@@ -317,29 +325,19 @@ class CircleDetectionTestModeWindows():
 			# fps - programVariables['arr_19']
 		
 		def runCalibration():
-			killCameraWindows()
+			camera.killCameraWindows()
 			cf.runCalibration(int(camPortNumber_entry.get()),int(calGridWidth_entry.get()),
 		     				  int(calStartingX_entry.get()),int(calStartingY_entry.get()),
 							  int(calChessH_entry.get()),int(calChessW_entry.get()),
 							  cameraName_entry.get(),int(calCameraZ_entry.get()))
-
-		def killCameraWindows():
-			try:
-				if(camera.ret):
-					camera.videoCapture.release()
-					cv.destroyAllWindows()
-					camera.outputRunningSpecs()
-				else:
-					return
-			except AttributeError:
-				print("Attempted to close camera when camera is not open. If you want to close, than click \"Close GUI\"")
 			
 		def killGUI():
 			camera.root.quit()
 
 		def startProgram():
-			# FIXME GUI freezes until camera is closed
-			Thread(camera.detectionProgram(1))
+			if(camera.needsReinitialized):
+				camera.__init__(camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleEdgePoints,camera.brightness,camera.contrast,camera.saturation,camera.hue,camera.gain,camera.exposure,camera.tog_autoE,camera.focus,camera.tog_autoF,camera.cameraNumber,camera.width,camera.height,camera.fps)
+			Thread(camera.detectionProgram(1))	# FIXME GUI freezes until camera is closed
 					
 		def getNpzFiles():
 			npzFiles = []
@@ -347,7 +345,7 @@ class CircleDetectionTestModeWindows():
 				if file.endswith(".npz"):
 					file = file[:-4] # Remove .npz from end of name
 					file = file.removeprefix('ProgramVariables') # Strip all but camera name
-					npzFiles.append(file)
+					npzFiles.append(file) # Add file name to list
 			return npzFiles
 
 		## Components of algorithm frame
@@ -651,7 +649,7 @@ class CircleDetectionTestModeWindows():
 				row=1, column=3, rowspan=3, pady=10, padx=10)
 		
 		customtkinter.CTkButton(
-			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=killCameraWindows).grid(
+			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=camera.killCameraWindows).grid(
 				row=4, column=3, rowspan=2, pady=10, padx=10)
 		
 		customtkinter.CTkButton(
