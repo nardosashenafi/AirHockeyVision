@@ -2,7 +2,7 @@
 ## Author Information
 - GUI
     - Roscoe Ambrose
-- Camera
+- OpenCV Camera Manipulation and Configuration
     - Haston LaGrone
 - Calibration
     - Daniel Pullicar
