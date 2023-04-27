@@ -35,12 +35,11 @@ class CircleDetectionTestModeWindows():
 		camera.fps = fps	# Framerate of capture
 
 		# Initialize for later use
+		camera.testMode = 0 # Does the user want the camera show windows and console output (0 = no, 1 = yes)
 		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
 		camera.frame_counter = 0 # Total number of frames detected by the program during runtime
 		camera.runtime_counter = 0 # Total runtime of all loops added up
 		camera.circle_counter = 0 # Total number of circles detected by the program during runtime
-		camera.redo = 0 # will program relaunch after closing
-		camera.newParams = [camera.cameraNumber,camera.width,camera.height,camera.tog_autoF,camera.tog_autoE,camera.exposure,camera.focus,camera.contrast,camera.brightness,camera.fps,camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleSensitivity,camera.circleEdgePoints,camera.saturation,camera.hue,camera.gain]
 
 		# Initialize camera capture	
 		camera.fourcc = cv.VideoWriter_fourcc('M','J','P','G')	# four character code for video encoding
@@ -65,8 +64,9 @@ class CircleDetectionTestModeWindows():
 			print(f"Accuracy: {(100*(camera.circle_counter/camera.frame_counter)):.3f}%")
 		print("-----------------------------")
         
-	def detectionProgram(camera, testMode):
-		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
+	def detectionProgram(camera, testMode: bool):
+		camera.testMode = testMode	# Set test mode
+		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
 		def fourccTranslator(fourccDec):
 			if(fourccDec == 844715353):
@@ -100,7 +100,6 @@ class CircleDetectionTestModeWindows():
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {round(camera.videoCapture.get(cv.CAP_PROP_FPS),1)}")
 			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
-			print(f"Settings {camera.videoCapture.get(cv.CAP_PROP_SETTINGS)}")
             
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
@@ -115,7 +114,7 @@ class CircleDetectionTestModeWindows():
 	    
 			camera.frame_counter += 1	# Frame is read successfully, so increment frame counter
 
-			undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
+			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
 			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
@@ -135,7 +134,7 @@ class CircleDetectionTestModeWindows():
 							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
 							#TODO: publish ros topic
-						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
+						#[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
@@ -154,14 +153,14 @@ class CircleDetectionTestModeWindows():
 
 			if testMode:
 				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
+				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				if testMode:
 					camera.outputRunningSpecs()
 				camera.killCameraWindows()
-				return camera.redo
+				return
 		camera.killCameraWindows()
-		return camera.redo
+		return
 				
 	
 	def createGUI(camera):
@@ -329,6 +328,7 @@ class CircleDetectionTestModeWindows():
 				if(camera.ret):
 					camera.videoCapture.release()
 					cv.destroyAllWindows()
+					camera.outputRunningSpecs()
 				else:
 					return
 			except AttributeError:
@@ -337,17 +337,9 @@ class CircleDetectionTestModeWindows():
 		def killGUI():
 			camera.root.quit()
 
-		def endProgram():
-			camera.outputRunningSpecs()
-			killCameraWindows()
-			killGUI()
-
 		def startProgram():
-			# FIXME When moving focus to GUI it crashes
-			camera.newParams = [camera.cameraNumber,camera.width,camera.height,camera.tog_autoF,camera.tog_autoE,camera.exposure,camera.focus,camera.contrast,camera.brightness,camera.fps,camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleSensitivity,camera.circleEdgePoints,camera.saturation,camera.hue,camera.gain]
-			camera.redo = 1
-			killCameraWindows()
-			killGUI()
+			# FIXME GUI freezes until camera is closed
+			Thread(camera.detectionProgram(1))
 					
 		def getNpzFiles():
 			npzFiles = []
@@ -659,7 +651,7 @@ class CircleDetectionTestModeWindows():
 				row=1, column=3, rowspan=3, pady=10, padx=10)
 		
 		customtkinter.CTkButton(
-			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=endProgram).grid(
+			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=killCameraWindows).grid(
 				row=4, column=3, rowspan=2, pady=10, padx=10)
 		
 		customtkinter.CTkButton(
