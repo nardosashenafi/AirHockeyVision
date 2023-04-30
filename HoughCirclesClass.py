@@ -35,6 +35,7 @@ class CircleDetectionTestModeWindows():
 		camera.fps = fps	# Framerate of capture
 
 		# Initialize for later use
+		camera.cameraName = "Default" # Name of camera
 		camera.needsReinitialized = 0 # Camera has been reinitialized -> set to 0 (0 = no, 1 = yes)
 		camera.testMode = 0 # Does the user want the camera show windows and console output (0 = no, 1 = yes)
 		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
@@ -287,9 +288,13 @@ class CircleDetectionTestModeWindows():
 
 		def setCamPortNum(value):
 			camera.cameraNumber = int(value)
-			#camera.videoCapture = cv.VideoCapture(camera.cameraNumber, cv.CAP_DSHOW)	# Crashed program when camera is already open
 			camPortNumber_entry.delete(0,"end")
 			camPortNumber_entry.insert(0,camera.cameraNumber)
+
+		def setCameraName(value):
+			camera.cameraName = value
+			cameraName_entry.delete(0,"end")
+			cameraName_entry.insert(0,camera.cameraName)
 
 		def saveVariables():
 			np.savez("ProgramVariables" + cameraName_entry.get(), 
@@ -298,8 +303,8 @@ class CircleDetectionTestModeWindows():
 					 camera.circleEdgePoints, camera.brightness, camera.contrast,
 					 camera.saturation,camera.hue,camera.gain, camera.exposure,
 					 camera.tog_autoE, camera.focus, camera.tog_autoF,
-					 int(camPortNumber_entry.get()),camera.width,camera.height,
-					 camera.fps)
+					 int(camPortNumber_entry.get()), cameraName_entry.get(),
+					 camera.width,camera.height, camera.fps)
 			
 		def loadVariables(value):
 			# TODO - load calibraiton fields from file with provided name (value)
@@ -322,16 +327,17 @@ class CircleDetectionTestModeWindows():
 			setFocus(programVariables['arr_14'])
 			setAutoFocus(programVariables['arr_15'])
 			setCamPortNum(programVariables['arr_16'])
-			# width - programVariables['arr_17']
-			# height - programVariables['arr_18']
-			# fps - programVariables['arr_19']
+			setCameraName(programVariables['arr_17'])
+			# width - programVariables['arr_18']
+			# height - programVariables['arr_19']
+			# fps - programVariables['arr_20']
 		
 		def runCalibration():
 			camera.killCameraWindows()
-			cf.runCalibration(int(camPortNumber_entry.get()),float(calGridWidth_entry.get()),
+			cf.runCalibration(camera.cameraNumber,float(calGridWidth_entry.get()),
 		     				  int(calStartingX_entry.get()),int(calStartingY_entry.get()),
 							  int(calChessH_entry.get()),int(calChessW_entry.get()),
-							  cameraName_entry.get(),int(calCameraZ_entry.get()))
+							  camera.cameraName,int(calCameraZ_entry.get()))
 			
 		def killGUI():
 			camera.root.quit()
