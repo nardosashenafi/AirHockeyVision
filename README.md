@@ -19,6 +19,6 @@
 
 ## Known issues:
 - Start Program button temporarily freezes GUI until camera window is closed with 'q'.
-    - Fix: Maybe issue with threading.
+    - Fix: Maybe issue with threading (GUI is waiting until camera window is closed, because it starts a while loop)
 - Spamming of Start Program button is not accounted for
     - Fix: if(camera.ret) 
