@@ -55,11 +55,13 @@ class CircleDetectionTestModeWindows():
 				camera.outputRunningSpecs()
 				camera.videoCapture.release() # Release webcam and close all windows
 				cv.destroyAllWindows() # Close all OpenCV windows
-				camera.needsReinitialized = 1
 			else:
 				return
 		except AttributeError:
 			print("Attempted to close camera when camera is not open. If you want to close, than click \"Close GUI\"")
+		finally:
+			camera.needsReinitialized = 1
+			camera.ret = 0
 
 	def outputRunningSpecs(camera):
 		print(f"\n-----------Program specs-----------")
@@ -75,7 +77,7 @@ class CircleDetectionTestModeWindows():
         
 	def detectionProgram(camera, testMode: bool):
 		camera.testMode = testMode	# Set test mode
-		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
+		#[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues("origindirectfull")
 
 		def fourccTranslator(fourccDec):
 			if(fourccDec == 844715353):
@@ -125,7 +127,7 @@ class CircleDetectionTestModeWindows():
 	    
 			camera.frame_counter += 1	# Frame is read successfully, so increment frame counter
 
-			undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
+			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
 			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
@@ -145,7 +147,7 @@ class CircleDetectionTestModeWindows():
 							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
 							#TODO: publish ros topic
-						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
+						#[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
@@ -164,7 +166,7 @@ class CircleDetectionTestModeWindows():
 
 			if camera.testMode:
 				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
+				#cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				camera.killCameraWindows()
 				return
@@ -326,7 +328,7 @@ class CircleDetectionTestModeWindows():
 		
 		def runCalibration():
 			camera.killCameraWindows()
-			cf.runCalibration(int(camPortNumber_entry.get()),int(calGridWidth_entry.get()),
+			cf.runCalibration(int(camPortNumber_entry.get()),float(calGridWidth_entry.get()),
 		     				  int(calStartingX_entry.get()),int(calStartingY_entry.get()),
 							  int(calChessH_entry.get()),int(calChessW_entry.get()),
 							  cameraName_entry.get(),int(calCameraZ_entry.get()))
@@ -342,7 +344,7 @@ class CircleDetectionTestModeWindows():
 		def getNpzFiles():
 			npzFiles = []
 			for file in os.listdir("./"):
-				if file.endswith(".npz"):
+				if file.endswith(".npz") and file.startswith('ProgramVariables'):
 					file = file[:-4] # Remove .npz from end of name
 					file = file.removeprefix('ProgramVariables') # Strip all but camera name
 					npzFiles.append(file) # Add file name to list
@@ -446,7 +448,7 @@ class CircleDetectionTestModeWindows():
 
 		# Brightness of capture
 		cameraBrightness_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Brightness", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Brightness", font=('Arial', 22)).grid(
 				row=1, column=0, pady=10, padx=10)
 		cameraBrightness_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setBrightness)
@@ -458,7 +460,7 @@ class CircleDetectionTestModeWindows():
 
 		# Contrast of capture
 		cameraContrast_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Contrast", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Contrast", font=('Arial', 22)).grid(
 				row=2, column=0, pady=10, padx=10)
 		cameraContrast_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setContrast)
@@ -470,7 +472,7 @@ class CircleDetectionTestModeWindows():
 		
 		# Saturation of capture
 		cameraSaturation_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Saturation", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Saturation", font=('Arial', 22)).grid(
 				row=3, column=0, pady=10, padx=10)
 		cameraSaturation_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setSaturation)
@@ -482,7 +484,7 @@ class CircleDetectionTestModeWindows():
 
 		# Hue of capture (not applicable to my camera?)
 		cameraHue_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Hue", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Hue", font=('Arial', 22)).grid(
 				row=4, column=0, pady=10, padx=10)
 		cameraHue_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setHue)
@@ -494,7 +496,7 @@ class CircleDetectionTestModeWindows():
 		
 		# Gain of capture
 		cameraGain_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Gain", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Gain", font=('Arial', 22)).grid(
 				row=5, column=0, pady=10, padx=10)
 		cameraGain_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setGain)
@@ -506,7 +508,7 @@ class CircleDetectionTestModeWindows():
 
 		# Exposure of capture
 		cameraExposure_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Exposure", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Exposure", font=('Arial', 22)).grid(
 				row=6, column=0, pady=10, padx=10)
 		cameraExposure_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=-11, to=-1, width=400, number_of_steps=10, border_width=3, command=setExposure)
@@ -518,7 +520,7 @@ class CircleDetectionTestModeWindows():
 
 		# Auto Exposure of capture
 		cameraAutoExposure_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Auto Exposure", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Auto Exposure", font=('Arial', 22)).grid(
 				row=7, column=0, pady=10, padx=10)
 		cameraAutoExposure_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1, border_width=3, command=setAutoExposure)
@@ -530,7 +532,7 @@ class CircleDetectionTestModeWindows():
 
 		# Focus of capture
 		cameraFocus_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Focus", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Focus", font=('Arial', 22)).grid(
 				row=8, column=0, pady=10, padx=10)
 		cameraFocus_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=255, width=400, number_of_steps=255, border_width=3, command=setFocus)
@@ -542,7 +544,7 @@ class CircleDetectionTestModeWindows():
 
 		# Auto Focus of capture
 		cameraAutoFocus_label = customtkinter.CTkLabel(
-			master=cameraFrame, text="Camera Auto Focus", font=('Arial', 22)).grid(
+			master=cameraFrame, text="Auto Focus", font=('Arial', 22)).grid(
 				row=9, column=0, pady=10, padx=10)
 		cameraAutoFocus_slider = customtkinter.CTkSlider(
 			master=cameraFrame, from_=0, to=1, width=400, number_of_steps=1, border_width=3, command=setAutoFocus)
@@ -565,7 +567,7 @@ class CircleDetectionTestModeWindows():
 
 		# Calibration Grid Width (Default 3.0 (cm))
 		calGridWidth_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal grid width", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Grid width", font=('Arial', 22)).grid(
 				row=1, column=0, pady=10, padx=10)
 		calGridWidth_entry = customtkinter.CTkEntry(
 			master=calibrationFrame, placeholder_text='Default: 2.44 (cm)', width=435, height=25, corner_radius=10)
@@ -573,7 +575,7 @@ class CircleDetectionTestModeWindows():
 
 		# Calibration starting X (measured in holes from 0,0 hole)
 		calStartingX_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal starting X", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Starting X", font=('Arial', 22)).grid(
 				row=2, column=0, pady=10, padx=10)
 		calStartingX_entry = customtkinter.CTkEntry(
 			master=calibrationFrame, placeholder_text='Default: 0 (Measured in holes from 0,0 hole)', width=435, height=25, corner_radius=10)
@@ -581,7 +583,7 @@ class CircleDetectionTestModeWindows():
 
 		# Calibration starting Y (measured in holes from 0,0 hole)
 		calStartingY_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal starting Y", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Starting Y", font=('Arial', 22)).grid(
 				row=3, column=0, pady=10, padx=10)
 		calStartingY_entry = customtkinter.CTkEntry(
 			master=calibrationFrame, placeholder_text='Default: 0 (Measured in holes from 0,0 hole)', width=435, height=25, corner_radius=10)
@@ -589,15 +591,15 @@ class CircleDetectionTestModeWindows():
 
 		# Calibration chess height (default 14)
 		calChessH_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal chess height", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Chess height", font=('Arial', 22)).grid(
 				row=4, column=0, pady=10, padx=10)
 		calChessH_entry = customtkinter.CTkEntry(
-			master=calibrationFrame, placeholder_text='Default: 7 (squares)', width=435, height=25, corner_radius=10)
+			master=calibrationFrame, placeholder_text='Default: 14 (squares)', width=435, height=25, corner_radius=10)
 		calChessH_entry.grid(row=4, column=1, pady=10, padx=10)
 
 		# Calibration chess width (default 9)
 		calChessW_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal chess width", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Chess width", font=('Arial', 22)).grid(
 				row=5, column=0, pady=10, padx=10)
 		calChessW_entry = customtkinter.CTkEntry(
 			master=calibrationFrame, placeholder_text='Default: 9 (squares)', width=435, height=25, corner_radius=10)
@@ -605,7 +607,7 @@ class CircleDetectionTestModeWindows():
 
 		# Calibration camera z distance (Measured by hand, the distance from camera to startingX, startingY location (cm))
 		calCameraZ_label = customtkinter.CTkLabel(
-			master=calibrationFrame, text="Cal Z distance", font=('Arial', 22)).grid(
+			master=calibrationFrame, text="Z distance", font=('Arial', 22)).grid(
 				row=6, column=0, pady=10, padx=10)
 		calCameraZ_entry = customtkinter.CTkEntry(
 			master=calibrationFrame, placeholder_text='Measured: Distance from camera to startingX,startingY location (cm)', width=435, height=25, corner_radius=10)

@@ -7,6 +7,9 @@ def startup():
 	camera = CircleDetectionTestModeWindows(17,1.2,10000,5,50,100,40,175,75,125,0,10,-7,0,255,1,0,1280,720,60)
 	camera.createGUI()
 	#Thread(target = camera.createGUI).start()
+	#while(not camera.needsReinitialized):
+		#print("something")
+	#Thread(target = camera.detectionProgram(1)).start()
 
 def main():
 	startup()
