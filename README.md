@@ -8,7 +8,8 @@
     - Daniel Pullicar
     - Mason Cannon
 
-## Needed functions to run are:
+## Required files to run are:
+- AirHockeyIcon.ico
 - Calibrate.py
 - Calibrationfunc.py
 - Caller.py
