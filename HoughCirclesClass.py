@@ -55,7 +55,7 @@ class CircleDetectionTestModeWindows():
 				if(camera.testMode):
 					camera.outputRunningSpecs()
 				camera.videoCapture.release() # Release webcam and close all windows
-				cv.destroyAllWindows() # Close all OpenCV windows
+				cv.destroyAllWindows() # Close all OpenCV windows	#FIXME: I think this is what's crashing the program when clicking End Program
 			else:
 				return
 		except AttributeError:
@@ -78,7 +78,7 @@ class CircleDetectionTestModeWindows():
 		print("-----------------------------------")
         
 	def detectionProgram(camera, testMode: bool):
-		camera.testMode = testMode	# Set test mode
+		camera.testMode = testMode # Set test mode
 		[camMtx, newCamMtx, distMtx, roi, s, extMtx, camZ] = ctw.getCalibrationValues(camera.cameraName)
 
 		def fourccTranslator(fourccDec):
@@ -299,6 +299,14 @@ class CircleDetectionTestModeWindows():
 			cameraName_entry.delete(0,"end")
 			cameraName_entry.insert(0,camera.cameraName)
 
+		def toggleProgramMode(value):
+			camera.testMode = value
+			programMode_slider.set(camera.testMode)
+			if(camera.testMode):
+				programMode_label_value.configure(text="Test Mode")
+			if(not camera.testMode):
+				programMode_label_value.configure(text="Run Mode")
+
 		def assignEntryValues():
 			try:
 				setCamPortNum(camPortNumber_entry.get())
@@ -324,6 +332,7 @@ class CircleDetectionTestModeWindows():
 						camera.width,camera.height, camera.fps)
 			
 		def loadVariables(value):
+			# TODO: check whether program mode switch is on run mode (if yes then loading these variables will freeze the camera as it's not supposed to be open anymore)
 			programVariables = np.load("ProgramVariables" + value + ".npz", allow_pickle=True)
 			setBlurLevel(programVariables['arr_0'])
 			setDp(programVariables['arr_1'])
@@ -362,7 +371,7 @@ class CircleDetectionTestModeWindows():
 			if(assignEntryValues() == 0):
 				if(camera.needsReinitialized):
 					camera.__init__(camera.blur,camera.dp,camera.minDist,camera.minRadius,camera.maxRadius,camera.circleSensitivity,camera.circleEdgePoints,camera.brightness,camera.contrast,camera.saturation,camera.hue,camera.gain,camera.exposure,camera.tog_autoE,camera.focus,camera.tog_autoF,camera.portNumber,camera.width,camera.height,camera.fps)
-				Thread(camera.detectionProgram(1)).start()	# FIXME GUI freezes until camera is closed
+				Thread(camera.detectionProgram(camera.testMode)).start()	# FIXME GUI freezes until camera is closed
 					
 		def getNpzFiles():
 			npzFiles = []
@@ -642,47 +651,67 @@ class CircleDetectionTestModeWindows():
 			master=buttonFrame, text="Main Interface", font=('Arial', 28)).grid(
 				row=0, column=0, columnspan=4, pady=10, padx=10)
 
+		# Run/Test mode toggle switch
+		programMode_label = customtkinter.CTkLabel(
+			master=buttonFrame, text="Program Mode", font=('Arial', 22)).grid(
+				row=1, column=0, pady=10, padx=10)
+		programMode_slider = customtkinter.CTkSlider(
+			master=buttonFrame, from_=0, to=1, width=200, number_of_steps=1, border_width=3, command=toggleProgramMode)
+		programMode_slider.set(camera.testMode)
+		programMode_slider.grid(row=1, column=1, pady=10, padx=10)
+		if camera.testMode: programModeString = 'Test Mode'
+		else: programModeString = 'Run Mode'
+		programMode_label_value = customtkinter.CTkLabel(
+			master=buttonFrame, text=programModeString, font=('Arial', 22))
+		programMode_label_value.grid(row=1, column=2, pady=10, padx=10)
+
 		# Camera Port Number (Serial Port)
 		camPortNumber_label = customtkinter.CTkLabel(
 			master=buttonFrame, text="Camera Port #", font=('Arial', 22)).grid(
-				row=1, column=0, pady=10, padx=10)
+				row=2, column=0, pady=10, padx=10)
 		camPortNumber_entry = customtkinter.CTkEntry(
 			master=buttonFrame, placeholder_text='Default: 0 or 1', font=('Arial', 18), width=200, height=25, corner_radius=10)
-		camPortNumber_entry.grid(row=1, column=1, pady=10, padx=10)
-
+		camPortNumber_entry.grid(row=2, column=1, pady=10, padx=10)
+		
 		# Camera name (used in filename of stored variable files)
 		cameraNameSave_label = customtkinter.CTkLabel(
 			master=buttonFrame, text="Camera Name", font=('Arial', 22)).grid(
-				row=2, column=0, pady=10, padx=10)
+				row=3, column=0, pady=10, padx=10)
 		cameraName_entry = customtkinter.CTkEntry(
 			master=buttonFrame, placeholder_text='Default', font=('Arial', 18), width=200, height=25, corner_radius=10)
-		cameraName_entry.grid(row=2, column=1, pady=10, padx=10)
+		cameraName_entry.grid(row=3, column=1, pady=10, padx=10)
+
+		# Save variables button
 		customtkinter.CTkButton(
 			master=buttonFrame, text='Save Variables', font=('Arial', 18), height=80, command=saveVariables).grid(
-				row=1, column=2, rowspan=2, pady=10, padx=10)
+				row=2, column=2, rowspan=2, pady=10, padx=10)
 
 		# Load variables from files shown in option menu
 		loadVariables_label = customtkinter.CTkLabel(
 			master=buttonFrame, text="Load Variables", font=('Arial', 22)).grid(
-				row=3, column=0, pady=10, padx=10)
+				row=4, column=0, pady=10, padx=10)
 		customtkinter.CTkOptionMenu(
 			master=buttonFrame, values=getNpzFiles(), font=('Arial', 18), width=362, command=loadVariables).grid(
-				row=3, column=1, columnspan=2, padx=10, pady=10)
+				row=4, column=1, columnspan=2, padx=10, pady=10)
 
+		# Close GUI button
 		customtkinter.CTkButton(
 			master=buttonFrame, text='Close GUI', font=('Arial', 18), height=135, command=killGUI).grid(
 				row=1, column=3, rowspan=3, pady=10, padx=10)
 		
+		# Close camera window button
 		customtkinter.CTkButton(
-			master=buttonFrame, text='End Program', font=('Arial', 18), height=80, command=camera.killCameraWindows).grid(
-				row=4, column=3, rowspan=2, pady=10, padx=10)
+			master=buttonFrame, text='End Program', font=('Arial', 18), height=135, command=camera.killCameraWindows).grid(
+				row=4, column=3, rowspan=3, pady=10, padx=10)
 		
+		# Run calibration button
 		customtkinter.CTkButton(
 			master=buttonFrame, text='Run Calibration', font=('Arial', 18), width=530, command=runCalibration).grid(
-				row=4, column=0, columnspan=3, pady=10, padx=10)
+				row=5, column=0, columnspan=3, pady=10, padx=10)
 
+		# Start program button
 		customtkinter.CTkButton(
 			master=buttonFrame, text='Start Program', font=('Arial', 18), width=530, command=startProgram).grid(
-				row=5, column=0, columnspan=3, pady=10, padx=10)
+				row=6, column=0, columnspan=3, pady=10, padx=10)
 		
 		camera.root.mainloop()
