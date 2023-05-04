@@ -324,8 +324,6 @@ class CircleDetectionTestModeWindows():
 						camera.width,camera.height, camera.fps)
 			
 		def loadVariables(value):
-			# TODO - load calibraiton fields from file with provided name (value)
-
 			programVariables = np.load("ProgramVariables" + value + ".npz", allow_pickle=True)
 			setBlurLevel(programVariables['arr_0'])
 			setDp(programVariables['arr_1'])

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from HoughCirclesClass import *
 from threading import Thread
 
