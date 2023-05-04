@@ -1,9 +1,11 @@
+import numpy as np
+import cv2 as cv
+
 def getCalibrationValues(cameraName):
     """
     :param cameraName ***Must be same as Camera Name used in Calibration***
     :return:    # FIXME: Needs details on return values
     """
-    import numpy as np
     calibrationArrays = np.load("CameraArrays"+cameraName+".npz", allow_pickle=True)
     camMtx = calibrationArrays['arr_0']
     newCamMtx = calibrationArrays['arr_1']
@@ -26,7 +28,6 @@ def img2world(x, y, camMtx, extMtx, s, camZ):
     :param camZ: from getCalibrationValues()
     :return: X,Y,Z coordinates in world coordinates (cm)
     """
-    import numpy as np
     imgMtx = [[s * x], [s * y], [s]]
     imgMtx = np.linalg.multi_dot([np.linalg.inv(camMtx), imgMtx])  # Double check 3x1.
     imgMtx = np.delete(imgMtx,2,0)
@@ -52,7 +53,6 @@ def deWarp(frame,camMtx,distMtx,newCamMtx,roi):
     :param newCamMtx: from getCalibrationValues()
     :return: Dewarped Frame (can be processed with Monochrome, Blur, etc...)
     """
-    import cv2 as cv
 
     #undistortedFrame = cv.undistort(frame, camMtx, distMtx, None, newCamMtx)
     #x, y, w, h = roi
