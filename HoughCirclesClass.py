@@ -165,7 +165,7 @@ class CircleDetectionTestModeWindows():
 				try:
 					print(f'Pixel X: {chosen[0]}, Pixel Y: {chosen[1]}, Pixel Radius: {chosen[2]}')
 					#print(f'Image Matrix: {imgMtx}')
-					print(f'Object Position X: {objpos[0]}, Object Position Y: {objpos[1]}')
+					print(f'Object Position X: {round(objpos[0][0],2)}, Object Position Y: {round(objpos[1][0],2)}')
 				except UnboundLocalError:	# Variables were accessed before being defined
 					print('No circle detected yet') 
 
