@@ -6,17 +6,13 @@ Saves a files with all necassary files to perform function in ConvertToWorldFunc
 Run the program, then press Spacebar to capture frames with a chessboard. Repeat from 20 different positions and angles.
 Try to cover a variety of angles from positions that utilize all the space in view of camera
 Once finished, press ESC to undistort image.
-Programmed for used with 7x7 chessboard. (9x9 including outside ring) # FIXME: This has changed
-TODO:
-    2.75 cm/85 holes =2.44 cm
-    Transform 2D coordinates to 3D
 """
 def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,cameraName,camZ):
     """
     :param gridwidth: Default 2.44 (cm)
     :param startingX: Default 0 (measured in holes from 0,0 hole)
     :param startingY: Default 0 (measured in holes from 0,0 hole)
-    :param chessh: Default 7
+    :param chessh: Default 14
     :param chessw: Default 9
     :param cameraName: ***Used in filename***
     :param camZ:  Measured by hand, distance from camera to startingX,startingY location (cm)
