@@ -13,4 +13,4 @@ TODO:
 import Calibrationfunc as cf
 
 #camPortNum,gridwidth,startingX,startingY,chessh,chessw,cameraName,camZ
-cf.runCalibration(0,3,0,0,14,9,"origindirectfull",139)
+cf.runCalibration(0,3,0,0,14,9,"Default",139)
