@@ -9,6 +9,7 @@ Once finished, press ESC to undistort image.
 """
 def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,cameraName,camZ):
     """
+    See Documentation for instructios
     :param gridwidth: Default 2.44 (cm)
     :param startingX: Default 0 (measured in holes from 0,0 hole)
     :param startingY: Default 0 (measured in holes from 0,0 hole)
@@ -31,7 +32,8 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
     s = 0
 
     #Enter different values for calibCornerLocation based on known location available region
-    calibCornerLocation = [[0],[0],[0],[1]]
+    #This value uses the holes distance
+    calibCornerLocation = [[startingX*2.44],[startingY*2.44],[1],[1]]
 
     # Arrays to store object points and image points from all the images.
     objpoints = []  # 3d point in real world space
@@ -39,6 +41,7 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
     frames = []  # Frames taken from camera
     cam = cv.VideoCapture(camPortNum,cv.CAP_DSHOW)
 
+    #TODO: Edit this to match GUI settings (the 1280 and 720 params)
     cam.set(cv.CAP_PROP_FRAME_WIDTH, 1280)  # Set camera frame width
     cam.set(cv.CAP_PROP_FRAME_HEIGHT, 720)  # Set camera frame height
 
@@ -113,9 +116,7 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
             uv1 = [[corners2[0][0][0]],[corners2[0][0][1]],[1]]
 
             rotMtx, m = cv.Rodrigues(rvecs[-1])
-            #print("rotMtx", rotMtx)
             transVec = tvecs[-1]
-            #print("transVec[0][0]", transVec[2][0])
             extMtx1 = [[rotMtx[0][0], rotMtx[0][1], rotMtx[0][2], transVec[0][0]],
                       [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
                       [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]]]
@@ -124,13 +125,8 @@ def runCalibration(camPortNum,gridwidth,startingX,startingY,chessh,chessw,camera
                        [rotMtx[1][0], rotMtx[1][1], rotMtx[1][2], transVec[1][0]],
                        [rotMtx[2][0], rotMtx[2][1], rotMtx[2][2], transVec[2][0]],
                        [0, 0, 0, 1]]
-
-            #print("extMtx2", extMtx2)
-            # Don't Inverse.  Just dot the others without uv1 and check.
             rightSide = np.linalg.multi_dot([newcameramtx, extMtx1, calibCornerLocation])
-            #s = rightSide[2][0]
             s = camZ
-            #print("s", s)
 
             np.savez("CameraArrays" +cameraName, cameramtx, newcameramtx, dist, roi, s, extMtx2, camZ)
             break
