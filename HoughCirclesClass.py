@@ -148,8 +148,8 @@ class CircleDetectionTestModeWindows():
 	  							<= dist(i[0],i[1],prevCircle[0],prevCircle[1])):
 							chosen = i	# set the chosen circle equal to the next circle in the array
 							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # Chosen[2] is the radius so it can be ommited 
-							#TODO: publish ros topic
 						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
+						#TODO: publish ros topic using x=objpos[0][0] and y=objpos[1][0] in centimeters
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
 					cv.circle(frame, (chosen[0], chosen[1]), chosen[2], (255,0,0), 3)	# Draw a circle around the circumference of the chosen circle
 					
