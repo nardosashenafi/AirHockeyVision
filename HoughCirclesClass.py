@@ -170,8 +170,8 @@ class CircleDetectionTestModeWindows():
 					print('No circle detected yet') 
 
 			if camera.testMode:
-				cv.imshow("circles", frame)	# Show the original frame with the drawn circles to the user
-				cv.imshow("CameraVision", undistortedFrame) # Show the calibrated frame to the user
+				cv.imshow("Circles Within Camera Vision", frame)	# Show the original frame with the drawn circles to the user
+				cv.imshow("Undistorted Frame", undistortedFrame) # Show the calibrated frame to the user
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				camera.killCameraWindows()
 				return
