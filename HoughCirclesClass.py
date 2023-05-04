@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 import time as t
 import cv2 as cv
 import numpy as np
 import math
 import os
-import sys
 import customtkinter
 import ConvertToWorldFunc as ctw
 import Calibrationfunc as cf
@@ -40,6 +38,7 @@ class CircleDetectionTestModeWindows():
 		camera.testMode = 0 # Does the user want the camera show windows and console output (0 = no, 1 = yes)
 		camera.framerate = 0 # Calculated framerate using frame_counter and runtime_counter
 		camera.frame_counter = 0 # Total number of frames detected by the program during runtime
+		camera.circle_runtime_counter = 0 # Total runtime of all loops that found a circle added up
 		camera.runtime_counter = 0 # Total runtime of all loops added up
 		camera.circle_counter = 0 # Total number of circles detected by the program during runtime
 
@@ -68,13 +67,14 @@ class CircleDetectionTestModeWindows():
 	def outputRunningSpecs(camera):
 		print(f"\n-----------Program specs-----------")
 		print(f"Total runtime: {camera.runtime_counter:.3f} seconds")
-		print(f"Total frames captured: {camera.frame_counter:.0f}")
-		print(f"Total circles found: {camera.circle_counter:.0f}")
 		print(f"FPS: {camera.framerate:.3f}")
-		if camera.circle_counter > 0:
-			print(f"Processing speed {(camera.runtime_counter/camera.circle_counter):.3f} seconds")
+		print(f"Total circles found: {camera.circle_counter:.0f}")
+		print(f"Total frames captured: {camera.frame_counter:.0f}")
 		if camera.frame_counter > 0:
 			print(f"Accuracy: {(100*(camera.circle_counter/camera.frame_counter)):.3f}%")
+		if camera.circle_counter > 0:
+			print(f"Avg ttf each circle (only when circles are found): {(camera.circle_runtime_counter/camera.circle_counter):.3f} seconds")
+			print(f"Avg ttf each circle (across entire program runtime): {(camera.runtime_counter/camera.circle_counter):.3f} seconds")
 		print("-----------------------------------")
         
 	def detectionProgram(camera, testMode: bool):
@@ -147,7 +147,7 @@ class CircleDetectionTestModeWindows():
 						if (dist(chosen[0],chosen[1],prevCircle[0],prevCircle[1])\
 	  							<= dist(i[0],i[1],prevCircle[0],prevCircle[1])):
 							chosen = i	# set the chosen circle equal to the next circle in the array
-							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # I think chosen[0] is the radius so it can be ommited 
+							camera.coordinates = (chosen[0], chosen[1], chosen[2]) # Chosen[2] is the radius so it can be ommited 
 							#TODO: publish ros topic
 						[objpos,imgMtx] = ctw.img2world(chosen[0],chosen[1],camMtx,extMtx,s,camZ)
 					cv.circle(frame, (chosen[0], chosen[1]), 1, (0,0,255), 3)	# Draw a circle at the centerpoint of the chosen circle
@@ -155,6 +155,7 @@ class CircleDetectionTestModeWindows():
 					
 					prevCircle = chosen	# Set the previous circle equal to the chosen circle at the end of the loop
 					camera.circle_counter += 1	# Circle is drawn, so increment circle counter
+					camera.circle_runtime_counter += t.perf_counter() - start_time 	# Time how long the loop took to run (finding a circle)
 
 			runtime = t.perf_counter() - start_time 	# Time how long the loop took to run
 			camera.runtime_counter += runtime	# Get a total runtime of all loops
@@ -162,8 +163,7 @@ class CircleDetectionTestModeWindows():
 
 			if cv.waitKey(1) == 32:
 				try:
-					print(f'Chosen[0]: {chosen[0]} Chosen[1]:', end=' ')
-					print(f'{chosen[1]} Chosen[2]: {chosen[2]}')
+					print(f'Pixel X: {chosen[0]}, Pixel Y: {chosen[1]}, Pixel Radius: {chosen[2]}')
 					print(f'Image Matrix: {imgMtx}')
 					print(f'Object Position: {objpos}')
 				except UnboundLocalError:	# Variables were accessed before being defined
