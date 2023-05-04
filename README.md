@@ -15,6 +15,8 @@
 - Caller.py
 - ConvertToWorldFunc.py
 - HoughCirclesClass.py
+- CameraArraysdefault.npz
+- ProgramVariablesDefault.npz
 
 
 ## Known issues:
