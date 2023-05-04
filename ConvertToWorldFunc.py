@@ -5,7 +5,6 @@ def getCalibrationValues(cameraName):
     """
     import numpy as np
     calibrationArrays = np.load("CameraArrays"+cameraName+".npz", allow_pickle=True)
-    print(calibrationArrays.files)
     camMtx = calibrationArrays['arr_0']
     newCamMtx = calibrationArrays['arr_1']
     distMtx = calibrationArrays['arr_2']
