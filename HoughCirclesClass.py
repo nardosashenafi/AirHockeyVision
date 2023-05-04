@@ -303,7 +303,7 @@ class CircleDetectionTestModeWindows():
 			try:
 				setCamPortNum(camPortNumber_entry.get())
 			except(ValueError):
-				print("Please enter a valid port number (integer)")
+				print("Please enter a valid port number for the webcam (integer)")
 				return -1
 			if(cameraName_entry.get() == ''):
 				print("Please enter a camera name (string)")
