@@ -164,8 +164,8 @@ class CircleDetectionTestModeWindows():
 			if cv.waitKey(1) == 32:
 				try:
 					print(f'Pixel X: {chosen[0]}, Pixel Y: {chosen[1]}, Pixel Radius: {chosen[2]}')
-					print(f'Image Matrix: {imgMtx}')
-					print(f'Object Position: {objpos}')
+					#print(f'Image Matrix: {imgMtx}')
+					print(f'Object Position X: {objpos[0]}, Object Position Y: {objpos[1]}')
 				except UnboundLocalError:	# Variables were accessed before being defined
 					print('No circle detected yet') 
 
