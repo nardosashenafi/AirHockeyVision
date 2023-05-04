@@ -129,7 +129,7 @@ class CircleDetectionTestModeWindows():
 	    
 			camera.frame_counter += 1	# Frame is read successfully, so increment frame counter
 
-			undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
+			#undistortedFrame = ctw.deWarp(frame, camMtx, distMtx, newCamMtx, roi)
 			grayFrame = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)	# Make a copy of frame where the color has been converted to grayscale
 			blurFrame = cv.GaussianBlur(grayFrame,(camera.blur,camera.blur),0)	# Make a copy of grayFrame where the frame has been blurred
             
@@ -170,7 +170,7 @@ class CircleDetectionTestModeWindows():
 					print('No circle detected yet') 
 
 			if camera.testMode:
-				cv.imshow("Undistorted Frame", undistortedFrame) # Show the calibrated frame
+				#cv.imshow("Undistorted Frame", undistortedFrame) # Show the calibrated frame
 				cv.imshow("Circles", frame) # Show the frame with circles drawn
 			if cv.waitKey(1) & 0xFF == ord('q'):	# Quit program if user presses the 'q' key while in the imshow window
 				camera.killCameraWindows()
