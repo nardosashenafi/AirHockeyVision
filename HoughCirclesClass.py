@@ -65,7 +65,7 @@ class CircleDetectionTestModeWindows():
 			camera.ret = 0
 
 	def outputRunningSpecs(camera):
-		print(f"\n-----------Program specs-----------")
+		print(f"\n----------------Program specs----------------")
 		print(f"Total runtime: {camera.runtime_counter:.3f} seconds")
 		print(f"FPS: {camera.framerate:.3f}")
 		print(f"Total circles found: {camera.circle_counter:.0f}")
@@ -75,7 +75,7 @@ class CircleDetectionTestModeWindows():
 		if camera.circle_counter > 0:
 			print(f"Avg ttf each circle (only when circles are found): {(camera.circle_runtime_counter/camera.circle_counter):.3f} seconds")
 			print(f"Avg ttf each circle (across entire program runtime): {(camera.runtime_counter/camera.circle_counter):.3f} seconds")
-		print("-----------------------------------")
+		print("---------------------------------------------")
         
 	def detectionProgram(camera, testMode: bool):
 		camera.testMode = testMode # Set test mode
@@ -90,12 +90,12 @@ class CircleDetectionTestModeWindows():
 				return (f'{fourccDec} not recognized')
 		
 		if camera.testMode:
-			print("\n---------Parameters BEFORE---------")
+			print("\n--------------Parameters BEFORE--------------")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {camera.videoCapture.get(cv.CAP_PROP_FPS)}")
 			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
-			print("-----------------------------------")
+			print("---------------------------------------------")
         
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_WIDTH, camera.width)	# Set camera frame width
 		camera.videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT, camera.height)	# Set camera frame height
@@ -109,12 +109,12 @@ class CircleDetectionTestModeWindows():
 		camera.videoCapture.set(cv.CAP_PROP_FOURCC,camera.fourcc)	# Set camera compression format
 
 		if camera.testMode:
-			print("\n----------Parameters AFTER---------")
+			print("\n---------------Parameters AFTER--------------")
 			print(f"WIDTH: {camera.videoCapture.get(cv.CAP_PROP_FRAME_WIDTH)}")
 			print(f"HEIGHT: {camera.videoCapture.get(cv.CAP_PROP_FRAME_HEIGHT)}")
 			print(f"FPS: {round(camera.videoCapture.get(cv.CAP_PROP_FPS),1)}")
 			print(f"FOURCC: {fourccTranslator(camera.videoCapture.get(cv.CAP_PROP_FOURCC))}")
-			print("-----------------------------------")
+			print("---------------------------------------------")
             
 		prevCircle = None	# Circle from the previous frame (will represent the current detected circle)
 		dist = lambda x1, y1, x2, y2: math.dist([x1, x2], [y1, y2])	# Calculate the square of the distance between two points in a frame
@@ -163,9 +163,11 @@ class CircleDetectionTestModeWindows():
 
 			if cv.waitKey(1) == 32:
 				try:
+					print('\n---------------Puck Coordinates--------------')
 					print(f'Pixel X: {chosen[0]}, Pixel Y: {chosen[1]}, Pixel Radius: {chosen[2]}')
 					#print(f'Image Matrix: {imgMtx}')
-					print(f'Object Position X: {round(objpos[0][0],2)}, Object Position Y: {round(objpos[1][0],2)}')
+					print(f'World X: {round(objpos[0][0],2)}cm, World Y: {round(objpos[1][0],2)}cm')
+					print("---------------------------------------------")
 				except UnboundLocalError:	# Variables were accessed before being defined
 					print('No circle detected yet') 
 
